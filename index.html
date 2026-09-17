@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512.png">
-<title>MH Now Build Lab v0.3 PWA</title>
+<title>MH Now Build Lab v0.4 PWA</title>
 <style>
 :root{
  --bg:#0a0f15;--panel:#121923;--panel2:#17212d;--line:#293747;--text:#edf3f8;--muted:#98a8b8;
@@ -78,7 +78,7 @@ padding:8px 0;border-bottom:1px solid #263544}.slot:last-child{border-bottom:0}.
 @media(max-width:620px){.app{padding:9px}.header-actions .textbtn{display:none}.grid2,.grid3{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.result{grid-template-columns:44px minmax(0,1fr)}
 .score{grid-column:2;text-align:left}.req-add{grid-template-columns:1fr 58px}.req-add button{grid-column:1/-1}.drift-pool{grid-template-columns:1fr}.searchbox{grid-template-columns:1fr}}
 
-/* v0.3 PWA / iOS */
+/* v0.4 PWA / iOS */
 html,body{min-height:100%;min-height:100dvh;overscroll-behavior-y:none}
 body{-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;touch-action:manipulation}
 .app{padding-top:max(16px,env(safe-area-inset-top));padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));padding-bottom:max(16px,env(safe-area-inset-bottom))}
@@ -103,12 +103,24 @@ button,.tab,.bottom-tab{-webkit-user-select:none;user-select:none}
 }
 @media(display-mode:standalone){.pwa-browser-only{display:none!important}}
 
+
+/* v0.4 usability: searchable weapons / checkbox skills */
+.weapon-select-card{border:1px solid var(--line);background:#0d151e;border-radius:11px;padding:10px;display:grid;gap:7px}
+.weapon-current{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}.weapon-current b{font-size:13px}.weapon-current .meta{margin-top:3px}
+.picker-filters{display:grid;grid-template-columns:1.3fr .8fr .8fr;gap:7px;margin-bottom:9px}.picker-list{display:flex;flex-direction:column;gap:6px;max-height:58dvh;overflow:auto;-webkit-overflow-scrolling:touch}
+.weapon-row{border:1px solid var(--line);background:#0e161f;border-radius:10px;padding:9px 10px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;text-align:left;color:var(--text);width:100%}.weapon-row.active{border-color:#b47712;background:#2a2111}.weapon-row:hover{border-color:#526981}.weapon-row .wname{font-weight:900;font-size:13px}.weapon-row .wmeta{font-size:10.5px;color:var(--muted);margin-top:3px}.weapon-row .wstat{text-align:right;font-size:11px;color:#d8e5f1;white-space:nowrap}
+.skill-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-bottom:8px}.skill-cats{display:flex;gap:5px;overflow:auto;padding-bottom:4px;margin-bottom:8px}.skill-cat{border:1px solid var(--line);background:#0d151e;color:var(--muted);border-radius:999px;padding:6px 9px;font-size:11px;font-weight:900;white-space:nowrap}.skill-cat.active{border-color:#6f5117;background:#382a12;color:#ffd77e}
+.skill-check-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;max-height:58dvh;overflow:auto;padding-right:2px;-webkit-overflow-scrolling:touch}.skill-row{border:1px solid var(--line);background:#0d151e;border-radius:10px;padding:8px;display:grid;grid-template-columns:24px minmax(0,1fr) 72px;gap:7px;align-items:center}.skill-row.selected{border-color:#2d6084;background:#10283c}.skill-row input[type=checkbox]{width:20px;height:20px;accent-color:var(--gold)}.skill-row .sname{font-size:12px;font-weight:900}.skill-row .smeta{font-size:9.5px;color:var(--muted);margin-top:2px}.skill-row select{padding:6px;font-size:13px}.skill-selected-bar{display:flex;justify-content:space-between;gap:8px;align-items:center;margin:7px 0 8px}.skill-count{font-size:11px;color:var(--muted)}
+.data-coverage{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:9px 0}.cov{border:1px solid var(--line);background:#0e151d;border-radius:9px;padding:8px}.cov b{font-size:16px}.cov span{display:block;font-size:9.5px;color:var(--muted)}
+.search-progress{font-size:11px;color:var(--muted);padding:8px 0}.diag{padding:11px;border:1px solid #5e4b20;background:#2d2514;color:#ffe3a0;border-radius:10px;font-size:12px;line-height:1.55}
+@media(max-width:760px){.picker-filters{grid-template-columns:1fr 1fr}.picker-filters input{grid-column:1/-1}.skill-check-list{grid-template-columns:1fr}.weapon-row{min-height:58px}.data-coverage{grid-template-columns:1fr 1fr 1fr}}
+
 </style>
 </head>
 <body>
 <div class="app">
 <header>
- <div class="brand"><div class="logo">MH</div><div><h1>MH Now Build Lab <span class="badge gold">v0.3 PWA</span></h1>
+ <div class="brand"><div class="logo">MH</div><div><h1>MH Now Build Lab <span class="badge gold">v0.4 PWA</span></h1>
  <div class="sub">火力ランキング / スキル検索 / 漂移錬成 / 比較 / 素材 / iOS PWA</div></div></div>
  <div class="header-actions">
   <span class="badge net online" id="networkBadge">オンライン</span>
@@ -133,7 +145,8 @@ button,.tab,.bottom-tab{-webkit-user-select:none;user-select:none}
 <section class="pane" id="pane-power">
  <div class="layout">
   <aside class="card"><div class="hd">検索条件 <span id="comboBadge" class="badge">0構成</span></div><div class="bd">
-   <div class="field"><label>武器</label><select id="weaponSelect"></select></div>
+   <div class="field"><label>武器</label><select id="weaponSelect" class="hide" aria-hidden="true"></select>
+    <div class="weapon-select-card"><div class="weapon-current"><div id="weaponSummary"><b>武器を選択</b><div class="meta">読み込み中...</div></div><button id="weaponPickerBtn" class="btn">絞り込み選択</button></div></div></div>
    <div class="grid2">
     <div class="field"><label>攻撃力</label><input id="rawInput" type="number" min="0"></div>
     <div class="field"><label>会心率 %</label><input id="affInput" type="number" min="-100" max="100"></div>
@@ -181,7 +194,11 @@ button,.tab,.bottom-tab{-webkit-user-select:none;user-select:none}
 <section class="pane hide" id="pane-skill">
  <div class="layout">
   <aside class="card"><div class="hd">欲しいスキル</div><div class="bd">
-   <div class="req-add"><select id="skillPicker"></select><input id="skillLevel" type="number" min="1" max="5" value="1"><button id="addSkill" class="btn small">追加</button></div>
+   <div class="skill-toolbar"><input id="skillSearchText" type="text" placeholder="スキル名を検索（部分一致）"><button id="clearReq" class="btn small">選択解除</button></div>
+   <div class="skill-cats" id="skillCats"></div>
+   <div class="skill-selected-bar"><div class="skill-count" id="skillSelectedCount">0個選択</div><label class="check"><input id="skillSelectedOnly" type="checkbox">選択中だけ</label></div>
+   <div id="skillCheckList" class="skill-check-list"></div>
+   <select id="skillPicker" class="hide"></select><input id="skillLevel" class="hide" type="number" value="1"><button id="addSkill" class="hide">追加</button>
    <div id="reqList" class="req-list"></div>
    <div class="field"><label>並び順</label><select id="skillSort"><option value="score">火力指数が高い順</option><option value="extra">余剰スキルが少ない順</option><option value="slots">漂移残り枠が多い順</option></select></div>
    <div class="note">漂移モードは「最大威力」タブと共通です。自動最適化では、指定スキルを満たす漂移割当も探索します。</div>
@@ -218,7 +235,9 @@ button,.tab,.bottom-tab{-webkit-user-select:none;user-select:none}
    <div id="armorCatalog" class="ex-grid" style="margin-top:9px"></div>
   </div></div>
   <div class="card"><div class="hd">データマスター</div><div class="bd">
-   <div class="ok"><b>内蔵マスター:</b> <span id="dataVersion"></span><br>公式公開情報で確認した主要装備を収録。外部JSON読込で武器・防具・スキル・素材を追加/置換できます。</div>
+   <div class="ok"><b>使用中マスター:</b> <span id="dataVersion"></span><br><span id="dataSourceNote">起動時に data/mhn_master.json を確認します。</span></div>
+   <div class="data-coverage"><div class="cov"><b id="covWeapons">0</b><span>武器</span></div><div class="cov"><b id="covArmors">0</b><span>防具</span></div><div class="cov"><b id="covSkills">0</b><span>スキル</span></div></div>
+   <div class="info">v0.4から武器・防具・スキルは自動生成マスター対応です。GitHub Actions の「Update MHN master data」を実行すると公開情報から master JSON を再生成できます。</div>
    <div class="field" style="margin-top:11px"><label>JSONマスター読込</label><input id="masterFile" type="file" accept=".json,application/json"></div>
    <button id="resetMaster" class="btn" style="width:100%">内蔵マスターに戻す</button>
    <div class="note" style="margin-top:10px">※ゲーム更新後に装備性能が変わる可能性があります。各詳細画面の「公式」リンクで原情報を確認できます。</div>
@@ -236,11 +255,11 @@ button,.tab,.bottom-tab{-webkit-user-select:none;user-select:none}
  <div class="card guide"><div class="hd">簡単な操作法</div><div class="bd">
   <div class="ok"><b>最短手順:</b> ①武器を選ぶ → ②必要なら発動率/漂移を調整 → ③「最大威力構成を検索」 → ④上位構成を開く → ⑤マイセット保存。</div>
   <h2>1. 最大威力ランキング</h2>
-  <ol><li>「最大威力」タブで武器を選びます。攻撃力・会心・属性値は手入力で上書きできます。</li>
+  <ol><li>「最大威力」タブで「絞り込み選択」を押し、武器種・属性・素材元・名称で絞って武器を選びます。攻撃力・会心・属性値は手入力で上書きできます。</li>
   <li>弱点属性なら「弱点属性として計算」をONにします。</li><li>弱点特効・連撃など、常時発動しないスキルは「発動率・立ち回り」で実戦の割合に合わせます。</li>
   <li>漂移錬成は「なし / 自動最適化 / 指定加算」から選択します。</li><li>検索後、行をタップすると装備・スキル・計算内訳・入手先を確認できます。</li></ol>
   <h2>2. スキル指定検索</h2>
-  <ol><li>「スキル指定」タブでスキルとLvを追加します。</li><li>複数条件を追加して「条件を満たす構成を検索」。武器スキルと漂移錬成も合算します。</li></ol>
+  <ol><li>「スキル指定」タブでは一覧からチェックしてスキルを選び、右側でLvを指定します。文字検索・カテゴリ絞り込みも使えます。</li><li>複数条件を追加して「条件を満たす構成を検索」。武器スキルと漂移錬成も合算します。</li></ol>
   <h2>3. 比較・除外・マイセット</h2>
   <ul><li>構成詳細の「比較に追加」で最大3構成を横並び比較できます。</li><li>防具の「除外」を押すと、以後の検索候補から外れます。「除外・データ」タブで解除できます。</li>
   <li>「マイセット登録」でブラウザ内に保存します。データはこの端末/ブラウザの localStorage に保持されます。</li></ul>
@@ -256,7 +275,7 @@ button,.tab,.bottom-tab{-webkit-user-select:none;user-select:none}
  </div></div>
 </section>
 
-<footer>Monster Hunter Now は CAPCOM / Scopely 等の権利物です。本ツールは非公式の個人用シミュレータです。v0.3 PWA / 装備データ基準: 2026-09-18。ゲーム更新時は公式表示を優先してください。</footer>
+<footer>Monster Hunter Now は CAPCOM / Scopely 等の権利物です。本ツールは非公式の個人用シミュレータです。v0.4 PWA / 装備データ基準: 2026-09-18。ゲーム更新時は公式表示を優先してください。</footer>
 </div>
 
 
@@ -269,6 +288,12 @@ button,.tab,.bottom-tab{-webkit-user-select:none;user-select:none}
  <button class="bottom-tab" data-tab="data"><span class="ico">⚙</span>設定</button>
  <button class="bottom-tab" data-tab="guide"><span class="ico">?</span>ガイド</button>
 </nav>
+
+<div id="weaponModal" class="modal"><div class="dialog"><div class="dialog-top"><b>武器を絞り込み選択</b><button id="weaponClose" class="btn small">閉じる</button></div><div class="dialog-body">
+ <div class="picker-filters"><input id="weaponSearch" type="text" placeholder="武器名・素材元で検索"><select id="weaponTypeFilter"><option value="">全武器種</option></select><select id="weaponElementFilter"><option value="">全属性</option></select></div>
+ <div class="between" style="margin-bottom:8px"><span class="note" id="weaponMatchCount">0件</span><button id="weaponCustomBtn" class="btn small">カスタム武器</button></div>
+ <div id="weaponPickerList" class="picker-list"></div>
+</div></div></div>
 
 <div id="installModal" class="modal"><div class="dialog"><div class="dialog-top"><b>ホーム画面に追加</b><button id="installClose" class="btn small">閉じる</button></div><div class="dialog-body install-help">
  <div id="installIosHelp">
@@ -287,8 +312,8 @@ button,.tab,.bottom-tab{-webkit-user-select:none;user-select:none}
 "use strict";
 
 const BUILTIN = {
- version:"2026-09-18-R2",
- sourceNote:"Monster Hunter Now official equipment/skills pages; current subset verified 2026-09-18",
+ version:"2026-09-18-R4-fallback",
+ sourceNote:"v0.4内蔵フォールバック（スキル名一覧は現行、装備は自動マスター生成前の一部）",
  elements:["無属性","火","水","雷","氷","龍","毒","麻痺","睡眠","爆破"],
  weapons:[
   {id:"custom",name:"カスタム武器",type:"任意",grade:"手入力",attack:1764,affinity:0,element:"無属性",elementValue:0,skills:{},source:""},
@@ -298,18 +323,7 @@ const BUILTIN = {
   {id:"namielle_ig_g10",name:"ヒュドロスアーケーン 5",type:"操虫棍",grade:"G10",attack:1328,affinity:20,element:"水",elementValue:1074,skills:{"狩人の結束":1,"弱点特効":1},source:"https://monsterhunternow.com/weapons/namielle_insectglaive"},
   {id:"bishaten_hammer_g10",name:"大五光槌 5",type:"ハンマー",grade:"G10",attack:1764,affinity:0,element:"無属性",elementValue:0,skills:{"グループハント強化【攻撃】":2},source:"https://monsterhunternow.com/weapons/bishaten_hammer"}
  ],
- skills:{
-  "攻撃":{"max":5,"fire":1},"攻撃・境地":{"max":2,"fire":1},"見切り":{"max":5,"fire":1},"弱点特効":{"max":5,"fire":1},"超会心":{"max":5,"fire":1},
-  "連撃":{"max":5,"fire":1},"攻めの守勢":{"max":5,"fire":1},"力任せ":{"max":5,"fire":1},"会心撃【属性】":{"max":5,"fire":1},
-  "火属性攻撃強化":{"max":5,"fire":1},"水属性攻撃強化":{"max":5,"fire":1},"雷属性攻撃強化":{"max":5,"fire":1},"氷属性攻撃強化":{"max":5,"fire":1},"龍属性攻撃強化":{"max":5,"fire":1},
-  "火属性攻撃強化・境地":{"max":2,"fire":1},"水属性攻撃強化・境地":{"max":2,"fire":1},"雷属性攻撃強化・境地":{"max":2,"fire":1},"氷属性攻撃強化・境地":{"max":2,"fire":1},"龍属性攻撃強化・境地":{"max":2,"fire":1},
-  "滅尽龍の渇望":{"max":3,"fire":1},"闘気活性":{"max":5,"fire":1},"ジャスト巧撃【持続】":{"max":5,"fire":1},"闇討ち":{"max":5,"fire":1},"火事場力":{"max":5,"fire":1},
-  "力の解放":{"max":5,"fire":1},"キリンの雷角":{"max":3,"fire":1},"グループハント強化【攻撃】":{"max":5,"fire":1},
-  "ロックオン":{"max":1},"砲術":{"max":5},"ガード性能":{"max":5},"精霊の加護":{"max":5},"風圧耐性":{"max":3},"回避距離UP":{"max":3},
-  "根性":{"max":5},"背水防御":{"max":5},"破壊王":{"max":5},"KO術":{"max":5},"装填速度":{"max":3},"集中":{"max":5},"SPゲージ加速":{"max":3},
-  "泡沫の舞":{"max":3},"死中に活":{"max":5},"蓄積時攻撃強化":{"max":5},"狩人の結束":{"max":1},"巧撃":{"max":5},"絶対回避【SP】":{"max":3},
-  "炎王龍の爆塵":{"max":3},"不屈":{"max":5},"回避性能":{"max":3},"毒属性強化":{"max":5},"早業":{"max":3}
- },
+ skills:{"攻撃":{"max":5,"category":"attack","fire":1},"防御":{"max":5,"category":"defense"},"毒耐性":{"max":5,"category":"defense"},"見切り":{"max":5,"category":"attack","fire":1},"体力増強":{"max":5,"category":"defense"},"水耐性":{"max":5,"category":"defense"},"雷耐性":{"max":5,"category":"defense"},"火耐性":{"max":5,"category":"defense"},"氷耐性":{"max":5,"category":"defense"},"麻痺耐性":{"max":5,"category":"defense"},"体幹強化":{"max":5,"category":"defense"},"尻上がり":{"max":5,"category":"attack"},"不屈":{"max":5,"category":"attack"},"火属性攻撃強化":{"max":5,"category":"element","fire":1},"水属性攻撃強化":{"max":5,"category":"element","fire":1},"氷属性攻撃強化":{"max":5,"category":"element","fire":1},"雷属性攻撃強化":{"max":5,"category":"element","fire":1},"龍属性攻撃強化":{"max":5,"category":"element","fire":1},"ロックオン":{"max":1,"category":"attack"},"根性":{"max":5,"category":"defense"},"背水防御":{"max":5,"category":"defense"},"回避距離UP":{"max":3,"category":"action"},"闇討ち":{"max":5,"category":"attack","fire":1},"集中":{"max":5,"category":"action"},"毒属性強化":{"max":5,"category":"element"},"麻痺属性強化":{"max":5,"category":"element"},"攻めの守勢":{"max":5,"category":"attack","fire":1},"ガード性能":{"max":5,"category":"defense"},"反動軽減":{"max":3,"category":"attack"},"耳栓":{"max":5,"category":"defense"},"装填速度":{"max":3,"category":"action"},"ジャスト回避強化":{"max":5,"category":"action"},"精霊の加護":{"max":5,"category":"defense"},"SPゲージ加速":{"max":3,"category":"action"},"睡眠耐性":{"max":5,"category":"defense"},"風圧耐性":{"max":5,"category":"defense"},"フルチャージ":{"max":5,"category":"attack"},"連撃":{"max":5,"category":"attack","fire":1},"睡眠属性強化":{"max":5,"category":"element"},"火事場力":{"max":5,"category":"attack","fire":1},"KO術":{"max":5,"category":"attack"},"破壊王":{"max":5,"category":"attack"},"弱点特効":{"max":5,"category":"attack","fire":1},"SPスキル威力UP":{"max":5,"category":"attack"},"逆恨み":{"max":5,"category":"attack"},"団結力【秋のかぼちゃ狩り】":{"max":1,"category":"other"},"耐震":{"max":5,"category":"defense"},"軽巧":{"max":5,"category":"attack"},"SPゲージ加速【ジャスト回避】":{"max":5,"category":"action"},"超会心":{"max":5,"category":"attack","fire":1},"闇討ち【状態異常】":{"max":5,"category":"attack"},"早業":{"max":5,"category":"action"},"裂傷耐性":{"max":5,"category":"defense"},"力の解放":{"max":5,"category":"attack","fire":1},"強化持続":{"max":5,"category":"action"},"砲術":{"max":5,"category":"attack"},"SPゲージ保険":{"max":3,"category":"action"},"鋼龍の凍風":{"max":3,"category":"element"},"泡沫の舞":{"max":5,"category":"attack"},"死中に活":{"max":5,"category":"attack"},"目覚めの一撃":{"max":5,"category":"attack"},"ジャスト巧撃":{"max":5,"category":"attack"},"炎王龍の爆塵":{"max":3,"category":"attack"},"爆破属性強化":{"max":5,"category":"element"},"爆破やられ耐性":{"max":5,"category":"defense"},"装填防御":{"max":5,"category":"defense"},"鬼火纏":{"max":5,"category":"attack"},"闘気活性":{"max":5,"category":"attack","fire":1},"追い打ち【毒】":{"max":5,"category":"attack"},"会心撃【属性】":{"max":5,"category":"element","fire":1},"滅尽龍の渇望":{"max":3,"category":"attack","fire":1},"凶会心":{"max":5,"category":"attack"},"グループハント強化【防御】":{"max":3,"category":"defense"},"チェンジブースト":{"max":5,"category":"action"},"回避装填":{"max":5,"category":"action"},"不退転":{"max":5,"category":"attack"},"邁進":{"max":5,"category":"attack"},"幻獣の疾雷":{"max":3,"category":"element"},"勇猛":{"max":5,"category":"attack"},"防御の備え":{"max":3,"category":"defense"},"グループハント強化【攻撃】":{"max":5,"category":"attack","fire":1},"力任せ":{"max":5,"category":"attack","fire":1},"破壊王【SPスキル】":{"max":5,"category":"attack"},"堅忍不抜":{"max":5,"category":"defense"},"霞龍の毒霧":{"max":3,"category":"element"},"災禍転福":{"max":5,"category":"attack"},"ラストバレット":{"max":5,"category":"attack"},"追い打ち【麻痺】":{"max":5,"category":"attack"},"溜打・響音強化":{"max":5,"category":"attack","fire":1},"状態異常蓄積時威力UP":{"max":5,"category":"attack"},"ジャスト巧撃【状態異常】":{"max":5,"category":"attack"},"ハッピーニューイヤー【2024】":{"max":1,"category":"other"},"ホットサマー【2025】":{"max":1,"category":"other"},"溟龍の波雷":{"max":3,"category":"element"},"ジャスト溜め解放":{"max":5,"category":"attack"},"ハイチャージ【雷】":{"max":5,"category":"element"},"弾導強化":{"max":5,"category":"action"},"果敢":{"max":1,"category":"attack","fire":1},"ハイチャージ【氷】":{"max":5,"category":"element"},"ガード強化":{"max":3,"category":"defense"},"追撃":{"max":5,"category":"attack","fire":1},"ハイチャージ【火】":{"max":5,"category":"element"},"ジャスト巧撃【持続】":{"max":5,"category":"attack","fire":1},"チャージマスター":{"max":5,"category":"action"},"攻撃・境地":{"max":2,"category":"attack","fire":1},"劫血纏":{"max":5,"category":"attack"},"ハイチャージ【龍】":{"max":5,"category":"element"},"爵銀龍の紅血":{"max":5,"category":"attack"},"SPゲージ加速【ガード】":{"max":3,"category":"action"},"通常弾・属性通常弾強化":{"max":3,"category":"attack","fire":1},"弾丸節約":{"max":5,"category":"action"},"氷属性攻撃強化・境地":{"max":2,"category":"element"},"雷属性攻撃強化・境地":{"max":2,"category":"element"},"変形攻撃強化":{"max":5,"category":"action","fire":1},"絶対回避【SP】":{"max":3,"category":"action"},"龍耐性":{"max":5,"category":"defense"},"適正距離威力UP":{"max":5,"category":"attack","fire":1},"反射":{"max":5,"category":"defense"},"連撃・境地":{"max":2,"category":"attack","fire":1},"攻撃活性":{"max":5,"category":"attack","fire":1},"攻撃増強【会心】":{"max":5,"category":"attack","fire":1},"本領発揮":{"max":5,"category":"attack","fire":1},"水属性攻撃強化・境地":{"max":2,"category":"element"},"斬裂弾・属性斬裂弾強化":{"max":3,"category":"attack","fire":1},"後の先":{"max":5,"category":"action"},"破壊王【尻尾】":{"max":5,"category":"attack"},"龍属性攻撃強化・境地":{"max":2,"category":"element"},"ハイチャージ【水】":{"max":5,"category":"element"},"属性攻撃増強【SP】":{"max":5,"category":"element"},"無心":{"max":5,"category":"attack","fire":1},"冰龍の冰纏":{"max":5,"category":"element"},"SPゲージ加速【受け流し】":{"max":3,"category":"action"},"ダブルインパクト":{"max":5,"category":"attack","fire":1}},
  armors:[
   {id:"kulu_head",slot:"head",name:"クルルヘルム",monster:"クルルヤック",grade:"G8",drift:1,skills:{"ロックオン":1,"見切り":1},source:"https://monsterhunternow.com/armor/kuluyaku_head",monsterSource:""},
   {id:"nerg_head",slot:"head",name:"オーグヘルム",monster:"ネルギガンテ",grade:"G8",drift:1,skills:{"滅尽龍の渇望":1,"見切り":2,"回避性能":1},source:"https://monsterhunternow.com/armor/nergigante_head",monsterSource:"https://monsterhunternow.com/monsters/nergigante"},
@@ -446,11 +460,90 @@ function calcFromSkills(skills,weapon){
  return {score:rawExp+elemExp,rawExpected:rawExp,elemExpected:elemExp,affinity:effAff,breakdown:b};
 }
 
+
+const SKILL_CATEGORY_LABELS={all:"すべて",attack:"攻撃",element:"属性",action:"アクション",defense:"防御・耐性",other:"その他"};
+let skillCategory="all";
+
+function normalizeMaster(o){
+ if(!o.elements)o.elements=BUILTIN.elements;
+ if(!o.skills)o.skills={};
+ // Merge the current built-in skill catalog so a generated master never hides a newly-known skill name.
+ for(const [k,v] of Object.entries(BUILTIN.skills))if(!o.skills[k])o.skills[k]=v;
+ if(!Array.isArray(o.weapons))o.weapons=[];if(!Array.isArray(o.armors))o.armors=[];
+ if(!o.weapons.some(w=>w.id==="custom"))o.weapons.unshift(JSON.parse(JSON.stringify(BUILTIN.weapons[0])));
+ if(!o.materialsCatalog)o.materialsCatalog={};
+ return o;
+}
+async function tryLoadBundledMaster(){
+ try{
+  const r=await fetch("./data/mhn_master.json?ts="+Date.now(),{cache:"no-store"});if(!r.ok)return false;
+  const o=normalizeMaster(await r.json());validateMaster(o);DB=o;return true;
+ }catch(e){return false}
+}
+function updateDataCoverage(){
+ if($("covWeapons"))$("covWeapons").textContent=Math.max(0,DB.weapons.filter(w=>w.id!=="custom").length).toLocaleString();
+ if($("covArmors"))$("covArmors").textContent=DB.armors.length.toLocaleString();
+ if($("covSkills"))$("covSkills").textContent=Object.keys(DB.skills).length.toLocaleString();
+ if($("dataSourceNote"))$("dataSourceNote").textContent=DB.sourceNote||"内蔵フォールバックデータ";
+}
+function updateWeaponSummary(w){
+ if(!w||!$("weaponSummary"))return;
+ $("weaponSummary").innerHTML=`<b>${esc(w.type||"任意")}｜${esc(w.name)}</b><div class="meta">${esc(w.element||"無属性")} ${w.elementValue||0} / 攻撃 ${w.attack||0} / 会心 ${w.affinity||0}%${w.monster?` / ${esc(w.monster)}`:""}</div>`;
+}
+function renderWeaponPicker(){
+ const q=($("weaponSearch")?.value||"").trim().toLowerCase(),ty=$("weaponTypeFilter")?.value||"",el=$("weaponElementFilter")?.value||"";
+ const current=$("weaponSelect").value;
+ let arr=DB.weapons.filter(w=>w.id!=="custom");
+ if(ty)arr=arr.filter(w=>w.type===ty);if(el)arr=arr.filter(w=>w.element===el);
+ if(q)arr=arr.filter(w=>[w.name,w.type,w.element,w.monster,w.sourceMaterial].filter(Boolean).join(" ").toLowerCase().includes(q));
+ arr.sort((a,b)=>(a.type||"").localeCompare(b.type||"","ja")||(a.element||"").localeCompare(b.element||"","ja")||(a.name||"").localeCompare(b.name||"","ja"));
+ $("weaponMatchCount").textContent=`${arr.length.toLocaleString()}件 / 全${Math.max(0,DB.weapons.length-1).toLocaleString()}件`;
+ $("weaponPickerList").innerHTML=arr.length?arr.map(w=>`<button class="weapon-row ${w.id===current?"active":""}" data-id="${esc(w.id)}"><div><div class="wname">${esc(w.name)}</div><div class="wmeta">${esc(w.type||"")} / ${esc(w.element||"無属性")}${w.monster?` / ${esc(w.monster)}`:""}</div></div><div class="wstat">攻 ${w.attack||0}<br>会 ${w.affinity||0}% / 属 ${w.elementValue||0}</div></button>`).join(""):`<div class="empty">該当武器がありません。</div>`;
+ document.querySelectorAll("#weaponPickerList .weapon-row").forEach(b=>b.onclick=()=>{const w=DB.weapons.find(x=>x.id===b.dataset.id);if(!w)return;$("weaponSelect").value=w.id;setWeapon(w);$("weaponModal").classList.remove("open")});
+}
+function openWeaponPicker(){
+ const types=[...new Set(DB.weapons.filter(w=>w.id!=="custom").map(w=>w.type).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"ja"));
+ const els=[...new Set(DB.weapons.filter(w=>w.id!=="custom").map(w=>w.element||"無属性"))];
+ $("weaponTypeFilter").innerHTML='<option value="">全武器種</option>'+types.map(x=>`<option>${esc(x)}</option>`).join("");
+ $("weaponElementFilter").innerHTML='<option value="">全属性</option>'+els.map(x=>`<option>${esc(x)}</option>`).join("");
+ $("weaponSearch").value="";$("weaponModal").classList.add("open");renderWeaponPicker();
+}
+function skillAvailability(k){
+ let a=0,w=0;for(const x of DB.armors)if((x.skills?.[k]||0)>0)a++;for(const x of DB.weapons)if((x.skills?.[k]||0)>0)w++;return {a,w};
+}
+function renderSkillCategories(){
+ $("skillCats").innerHTML=Object.entries(SKILL_CATEGORY_LABELS).map(([k,v])=>`<button class="skill-cat ${skillCategory===k?"active":""}" data-cat="${k}">${v}</button>`).join("");
+ document.querySelectorAll("#skillCats .skill-cat").forEach(b=>b.onclick=()=>{skillCategory=b.dataset.cat;renderSkillCategories();renderSkillCatalog()});
+}
+function renderSkillCatalog(){
+ if(!$("skillCheckList"))return;
+ const q=($("skillSearchText").value||"").trim().toLowerCase(),only=$("skillSelectedOnly").checked;
+ let names=Object.keys(DB.skills).sort((a,b)=>a.localeCompare(b,"ja"));
+ if(skillCategory!=="all")names=names.filter(k=>(DB.skills[k]?.category||"other")===skillCategory);
+ if(q)names=names.filter(k=>k.toLowerCase().includes(q));if(only)names=names.filter(k=>requirements[k]);
+ names.sort((a,b)=>(requirements[b]?1:0)-(requirements[a]?1:0)||a.localeCompare(b,"ja"));
+ $("skillSelectedCount").textContent=`${Object.keys(requirements).length}個選択 / 表示 ${names.length}件`;
+ $("skillCheckList").innerHTML=names.map(k=>{const d=DB.skills[k]||{},max=d.max||5,sel=requirements[k]||0,av=skillAvailability(k);let opts="";for(let n=1;n<=max;n++)opts+=`<option value="${n}" ${sel===n?"selected":""}>Lv${n}</option>`;return `<div class="skill-row ${sel?"selected":""}" data-skill="${esc(k)}"><input class="skill-check" type="checkbox" ${sel?"checked":""}><div><div class="sname">${esc(k)}</div><div class="smeta">防具 ${av.a} / 武器 ${av.w}${d.drift?" / 漂移可":""}</div></div><select class="skill-lv">${opts}</select></div>`}).join("");
+ document.querySelectorAll("#skillCheckList .skill-row").forEach(row=>{const k=row.dataset.skill,cb=row.querySelector(".skill-check"),lvsel=row.querySelector(".skill-lv");cb.onchange=()=>{if(cb.checked)requirements[k]=+lvsel.value||1;else delete requirements[k];renderReq();persist();renderSkillCatalog()};lvsel.onchange=()=>{if(cb.checked){requirements[k]=+lvsel.value;renderReq();persist()} };});
+}
+function relevantSkills(req,weapon){const set=new Set(Object.keys(req||{}));for(const [k,v] of Object.entries(DB.skills))if(v?.fire)set.add(k);for(const k of Object.keys(weapon.skills||{}))set.add(k);if($("driftMode").value==="auto")for(const k of selectedDriftCandidates(weapon))set.add(k);return [...set]}
+function stateKey(skills,rel,slots){return rel.map(k=>Math.min(skills[k]||0,maxLv(k))).join(",")+"#"+slots}
+function reqDeficit(skills,req){let d=0;for(const [k,v] of Object.entries(req||{}))d+=Math.max(0,v-(skills[k]||0));return d}
+function bestAutoDrift(base,slots,candidates,weapon,req){
+ const extraReq=Object.keys(req||{}).filter(k=>DB.skills[k]?.drift!==false);candidates=[...new Set([...candidates,...extraReq])].slice(0,14);
+ let states=[{add:{},skills:base,score:calcFromSkills(base,weapon).score}];
+ for(let step=0;step<slots;step++){
+  const map=new Map();for(const st of states){const choices=[null,...candidates];for(const k of choices){let add={...st.add},skills=st.skills;if(k){if((skills[k]||0)>=maxLv(k))continue;add[k]=(add[k]||0)+1;skills=combine(base,add)}const key=candidates.map(x=>skills[x]||0).join(",");const score=calcFromSkills(skills,weapon).score,def=reqDeficit(skills,req),q=score-def*1e7;const old=map.get(key);if(!old||q>old.q)map.set(key,{add,skills,score,q})}}
+  states=[...map.values()].sort((a,b)=>b.q-a.q).slice(0,96);
+ }
+ const valid=states.filter(x=>reqMet(x.skills,req)).sort((a,b)=>b.score-a.score);return valid[0]||null;
+}
+
 function currentWeapon(){
  const preset=DB.weapons.find(w=>w.id===$("weaponSelect").value)||DB.weapons[0];
  return {...preset,attack:+$("rawInput").value||0,affinity:+$("affInput").value||0,element:$("elementSelect").value,elementValue:+$("elemInput").value||0};
 }
-function setWeapon(w){$("rawInput").value=w.attack;$("affInput").value=w.affinity;$("elementSelect").value=w.element;$("elemInput").value=w.elementValue}
+function setWeapon(w){if(!w)return;$("rawInput").value=w.attack||0;$("affInput").value=w.affinity||0;$("elementSelect").value=w.element||"無属性";$("elemInput").value=w.elementValue||0;updateWeaponSummary(w)}
 function usable(slot){return DB.armors.filter(a=>a.slot===slot&&!excluded.has(a.id))}
 function driftSlots(parts){return parts.reduce((n,p)=>n+(+p.drift||0),0)}
 
@@ -488,24 +581,20 @@ function evaluate(parts,weapon,req={}){
   return {...calcFromSkills(skills,weapon),skills,drift:{...manualDrift},slots,usedDrift:used};
  }
  const candidates=selectedDriftCandidates(weapon);
- let best=null;
- for(const add of distributions(candidates,slots)){
-  const skills=combine(base,add);if(!reqMet(skills,req))continue;
-  const c=calcFromSkills(skills,weapon);
-  if(!best||c.score>best.score)best={...c,skills,drift:{...add},slots,usedDrift:Object.values(add).reduce((a,b)=>a+b,0)};
- }
- return best;
+ const bestDrift=bestAutoDrift(base,slots,candidates,weapon,req);if(!bestDrift)return null;
+ const c=calcFromSkills(bestDrift.skills,weapon);return {...c,skills:bestDrift.skills,drift:{...bestDrift.add},slots,usedDrift:Object.values(bestDrift.add).reduce((a,b)=>a+b,0)};
 }
 
 function enumerate(req={}){
- const weapon=currentWeapon(),lists=SLOT_ORDER.map(usable);
- if(lists.some(x=>x.length===0))return [];
- const out=[],parts=[];
- function rec(i){
-  if(i===lists.length){const ev=evaluate(parts,weapon,req);if(ev)out.push({parts:[...parts],...ev});return}
-  for(const p of lists[i]){parts.push(p);rec(i+1);parts.pop()}
+ const weapon=currentWeapon(),lists=SLOT_ORDER.map(usable);if(lists.some(x=>x.length===0))return [];
+ const rel=relevantSkills(req,weapon);let states=[{parts:[],skills:sumSkills([],weapon.skills,{}),slots:0}];
+ for(const list of lists){
+  const map=new Map();
+  for(const st of states)for(const p of list){const skills=combine(st.skills,p.skills||{}),slots=st.slots+(+p.drift||0),key=stateKey(skills,rel,slots);let arr=map.get(key);if(!arr){arr=[];map.set(key,arr)}if(arr.length<2)arr.push({parts:[...st.parts,p],skills,slots});}
+  states=[...map.values()].flat();
+  if(states.length>80000){states.sort((a,b)=>calcFromSkills(b.skills,weapon).score-calcFromSkills(a.skills,weapon).score);states=states.slice(0,60000)}
  }
- rec(0);return out;
+ const out=[];for(const st of states){const ev=evaluate(st.parts,weapon,req);if(ev)out.push({parts:st.parts,...ev})}return out;
 }
 
 function chipHtml(skills,drift={},req={}){
@@ -531,6 +620,8 @@ function runPower(){
  bindResults("powerResults",lastPower);updateStats();
 }
 function runSkill(){
+ if(Object.keys(requirements).length===0){$("skillCount").textContent="0件";$("skillResults").innerHTML=`<div class="diag">スキルを1つ以上チェックしてください。上の一覧は文字検索・カテゴリ絞り込みができます。</div>`;return}
+ $("skillResults").innerHTML=`<div class="empty">構成を最適化中…</div>`;
  const all=enumerate(requirements),sort=$("skillSort").value,target=Object.values(requirements).reduce((a,b)=>a+b,0);
  if(sort==="score")all.sort((a,b)=>b.score-a.score);
  else if(sort==="slots")all.sort((a,b)=>(b.slots-b.usedDrift)-(a.slots-a.usedDrift)||b.score-a.score);
@@ -637,7 +728,7 @@ function renderArmorCatalog(){
 }
 function renderReq(){
  $("reqList").innerHTML=Object.entries(requirements).map(([k,v])=>`<div class="req">${esc(k)} Lv${v}<button data-k="${esc(k)}">×</button></div>`).join("");
- document.querySelectorAll("#reqList button").forEach(b=>b.onclick=()=>{delete requirements[b.dataset.k];renderReq()});
+ document.querySelectorAll("#reqList button").forEach(b=>b.onclick=()=>{delete requirements[b.dataset.k];renderReq();persist();renderSkillCatalog()});
 }
 function renderManualDrift(){
  $("manualDriftList").innerHTML=Object.entries(manualDrift).map(([k,v])=>`<div class="req">${esc(k)} +${v}<button data-k="${esc(k)}">×</button></div>`).join("");
@@ -651,14 +742,12 @@ function persist(){
 }
 
 function setupSelectors(){
- $("elementSelect").innerHTML=DB.elements.map(x=>`<option>${esc(x)}</option>`).join("");
- $("weaponSelect").innerHTML=DB.weapons.map(w=>`<option value="${w.id}">${esc(w.type)}｜${esc(w.name)} (${esc(w.grade)})</option>`).join("");
- const skills=Object.keys(DB.skills).sort((a,b)=>a.localeCompare(b,"ja"));
- $("skillPicker").innerHTML=skills.map(k=>`<option>${esc(k)}</option>`).join("");
- $("manualDriftSkill").innerHTML=skills.filter(k=>DB.skills[k]?.fire).map(k=>`<option>${esc(k)}</option>`).join("");
- const driftBase=[["見切り","見切り"],["弱点特効","弱点特効"],["超会心","超会心"],["__ELEMENT__","武器属性強化"],["連撃","連撃"],["攻撃","攻撃"]];
- $("driftPool").innerHTML=driftBase.map(([v,t],i)=>`<label class="check"><input type="checkbox" value="${v}" ${i<5?"checked":""}>${t}</label>`).join("");
- $("dataVersion").textContent=DB.version||"custom";
+ DB=normalizeMaster(DB);$("elementSelect").innerHTML=DB.elements.map(x=>`<option>${esc(x)}</option>`).join("");
+ $("weaponSelect").innerHTML=DB.weapons.map(w=>`<option value="${esc(w.id)}">${esc(w.type)}｜${esc(w.name)} (${esc(w.grade||"")})</option>`).join("");
+ const skills=Object.keys(DB.skills).sort((a,b)=>a.localeCompare(b,"ja"));$("skillPicker").innerHTML=skills.map(k=>`<option>${esc(k)}</option>`).join("");
+ $("manualDriftSkill").innerHTML=skills.filter(k=>DB.skills[k]?.drift!==false).map(k=>`<option>${esc(k)}</option>`).join("");
+ const driftBase=[["見切り","見切り"],["弱点特効","弱点特効"],["超会心","超会心"],["__ELEMENT__","武器属性強化"],["連撃","連撃"],["攻撃","攻撃"]];$("driftPool").innerHTML=driftBase.map(([v,t],i)=>`<label class="check"><input type="checkbox" value="${v}" ${i<5?"checked":""}>${t}</label>`).join("");
+ $("dataVersion").textContent=DB.version||"custom";updateDataCoverage();renderSkillCategories();renderSkillCatalog();
 }
 function setupUptimes(){
  $("uptimeSliders").innerHTML=UPTIMES.map(u=>`<div class="field"><div class="slider-head"><span>${u.label}</span><span id="lbl_${u.id}">${u.value}%</span></div><input id="up_${u.id}" type="range" min="0" max="100" value="${u.value}"></div>`).join("");
@@ -680,7 +769,7 @@ async function exportBackup(){
 }
 async function importBackup(file){
  const o=JSON.parse(await file.text());if(Array.isArray(o.excluded))excluded=new Set(o.excluded);if(Array.isArray(o.mysets))mysets=o.mysets;if(o.requirements)requirements=o.requirements;if(o.manualDrift)manualDrift=o.manualDrift;
- persist();renderReq();renderManualDrift();renderMysets();renderArmorCatalog();updateStats();
+ persist();renderReq();renderManualDrift();renderSkillCatalog();renderMysets();renderArmorCatalog();updateStats();
 }
 function validateMaster(o){
  if(!o||!Array.isArray(o.weapons)||!Array.isArray(o.armors)||!o.skills)throw new Error("weapons / armors / skills が必要です");
@@ -688,10 +777,10 @@ function validateMaster(o){
  return true;
 }
 async function loadMaster(file){
- const o=JSON.parse(await file.text());validateMaster(o);DB=o;if(!DB.elements)DB.elements=BUILTIN.elements;if(!DB.materialsCatalog)DB.materialsCatalog={};distroCache.clear();setupSelectors();
+ const o=normalizeMaster(JSON.parse(await file.text()));validateMaster(o);DB=o;distroCache.clear();setupSelectors();
  $("weaponSelect").value=DB.weapons[0].id;setWeapon(DB.weapons[0]);renderArmorCatalog();updateStats();alert("外部データマスターを読み込みました。");
 }
-function resetMaster(){DB=JSON.parse(JSON.stringify(BUILTIN));distroCache.clear();setupSelectors();$("weaponSelect").value="astalos_gs_g10";setWeapon(DB.weapons.find(w=>w.id==="astalos_gs_g10"));renderArmorCatalog();updateStats()}
+function resetMaster(){DB=normalizeMaster(JSON.parse(JSON.stringify(BUILTIN)));distroCache.clear();setupSelectors();const w=DB.weapons.find(w=>w.id==="astalos_gs_g10")||DB.weapons[0];$("weaponSelect").value=w.id;setWeapon(w);renderArmorCatalog();updateStats()}
 
 
 let deferredInstallPrompt=null;
@@ -726,26 +815,26 @@ window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredIns
 window.addEventListener("appinstalled",()=>{deferredInstallPrompt=null;updatePwaStatus()});
 window.addEventListener("online",updateNetwork);window.addEventListener("offline",updateNetwork);
 
-function init(){
- setupUptimes();setupSelectors();
+async function init(){
+ setupUptimes();const loaded=await tryLoadBundledMaster();setupSelectors();
  const saved=readStoredJson(STORAGE.state,{});requirements=saved.requirements||{};manualDrift=saved.manualDrift||{};
- $("weaponSelect").value="astalos_gs_g10";setWeapon(DB.weapons.find(w=>w.id==="astalos_gs_g10"));
+ const initial=DB.weapons.find(w=>w.id==="astalos_gs_g10")||DB.weapons.find(w=>w.id!=="custom")||DB.weapons[0];$("weaponSelect").value=initial.id;setWeapon(initial);
  $("weaponSelect").onchange=()=>setWeapon(DB.weapons.find(w=>w.id===$("weaponSelect").value)||DB.weapons[0]);
+ $("weaponPickerBtn").onclick=openWeaponPicker;$("weaponClose").onclick=()=>$("weaponModal").classList.remove("open");$("weaponModal").onclick=e=>{if(e.target===$("weaponModal"))$("weaponModal").classList.remove("open")};
+ $("weaponSearch").oninput=renderWeaponPicker;$("weaponTypeFilter").onchange=renderWeaponPicker;$("weaponElementFilter").onchange=renderWeaponPicker;$("weaponCustomBtn").onclick=()=>{const w=DB.weapons.find(w=>w.id==="custom")||DB.weapons[0];$("weaponSelect").value=w.id;setWeapon(w);$("weaponModal").classList.remove("open")};
+ $("skillSearchText").oninput=renderSkillCatalog;$("skillSelectedOnly").onchange=renderSkillCatalog;$("clearReq").onclick=()=>{requirements={};renderReq();persist();renderSkillCatalog()};
  $("powerSearch").onclick=runPower;$("skillSearch").onclick=runSkill;
- $("addSkill").onclick=()=>{const k=$("skillPicker").value;requirements[k]=clamp(+$("skillLevel").value||1,1,maxLv(k));renderReq();persist()};
- $("addManualDrift").onclick=()=>{const k=$("manualDriftSkill").value;manualDrift[k]=clamp(+$("manualDriftLevel").value||1,1,maxLv(k));renderManualDrift();persist()};
+ $("addSkill").onclick=()=>{};$("addManualDrift").onclick=()=>{const k=$("manualDriftSkill").value;manualDrift[k]=clamp(+$("manualDriftLevel").value||1,1,maxLv(k));renderManualDrift();persist()};
  $("driftMode").onchange=()=>{$("autoDriftBox").classList.toggle("hide",$("driftMode").value!=="auto");$("manualDriftBox").classList.toggle("hide",$("driftMode").value!=="manual")};
  document.querySelectorAll(".tab,.bottom-tab").forEach(t=>t.onclick=()=>showTab(t.dataset.tab));
  $("modalClose").onclick=()=>$("modal").classList.remove("open");$("modal").onclick=e=>{if(e.target===$("modal"))$("modal").classList.remove("open")};
- $("clearCompare").onclick=()=>{compareList=[];renderCompare()};
- $("clearSets").onclick=()=>{if(confirm("マイセットを全削除しますか？")){mysets=[];persist();renderMysets();renderMaterialSetOptions();updateStats()}};
- $("clearExcluded").onclick=()=>{excluded.clear();persist();renderArmorCatalog();updateStats()};
- $("armorSearch").oninput=renderArmorCatalog;$("armorSlotFilter").onchange=renderArmorCatalog;
- $("calcMaterials").onclick=calcMaterial;$("materialSet").onchange=e=>currentMaterialSetId=e.target.value;
- $("exportBtn").onclick=exportBackup;$("importBtn").onclick=()=>$("importFile").click();$("installBtn").onclick=openInstallHelp;$("installBtn2").onclick=openInstallHelp;$("installClose").onclick=()=>$("installModal").classList.remove("open");$("installModal").onclick=e=>{if(e.target===$("installModal"))$("installModal").classList.remove("open")};$("refreshCache").onclick=refreshPwaCache;$("importFile").onchange=async e=>{if(e.target.files[0])try{await importBackup(e.target.files[0])}catch(err){alert("読込失敗: "+err.message)}e.target.value=""};
- $("masterFile").onchange=async e=>{if(e.target.files[0])try{await loadMaster(e.target.files[0])}catch(err){alert("マスター読込失敗: "+err.message)}e.target.value=""};
- $("resetMaster").onclick=resetMaster;
- renderReq();renderManualDrift();renderMysets();renderMaterialSetOptions();renderArmorCatalog();updateStats();runPower();registerPwa();
+ $("clearCompare").onclick=()=>{compareList=[];renderCompare()};$("clearSets").onclick=()=>{if(confirm("マイセットを全削除しますか？")){mysets=[];persist();renderMysets();renderMaterialSetOptions();updateStats()}};
+ $("clearExcluded").onclick=()=>{excluded.clear();persist();renderArmorCatalog();updateStats()};$("armorSearch").oninput=renderArmorCatalog;$("armorSlotFilter").onchange=renderArmorCatalog;
+ $("calcMaterials").onclick=calcMaterial;$("materialSet").onchange=e=>currentMaterialSetId=e.target.value;$("exportBtn").onclick=exportBackup;$("importBtn").onclick=()=>$("importFile").click();
+ $("installBtn").onclick=openInstallHelp;$("installBtn2").onclick=openInstallHelp;$("installClose").onclick=()=>$("installModal").classList.remove("open");$("installModal").onclick=e=>{if(e.target===$("installModal"))$("installModal").classList.remove("open")};$("refreshCache").onclick=refreshPwaCache;
+ $("importFile").onchange=async e=>{if(e.target.files[0])try{await importBackup(e.target.files[0])}catch(err){alert("読込失敗: "+err.message)}e.target.value=""};$("masterFile").onchange=async e=>{if(e.target.files[0])try{await loadMaster(e.target.files[0])}catch(err){alert("マスター読込失敗: "+err.message)}e.target.value=""};$("resetMaster").onclick=resetMaster;
+ renderReq();renderManualDrift();renderSkillCatalog();renderMysets();renderMaterialSetOptions();renderArmorCatalog();updateStats();runPower();registerPwa();
+ if(!loaded && $("dataSourceNote"))$("dataSourceNote").textContent="内蔵フォールバック。自動マスター未生成です。GitHub Actionsを実行してください。";
 }
 init();
 </script>

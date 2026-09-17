@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "MH Now Build Lab",
+  "name": "MH Now Build Lab v0.4",
   "short_name": "MHN Build Lab",
-  "description": "Monster Hunter Now 装備構成・火力・スキル・素材シミュレーター",
+  "description": "Monster Hunter Now build simulator with searchable weapon catalog, skill checklist, ranking, driftsmelting, materials and PWA support.",
   "lang": "ja-JP",
   "dir": "ltr",
   "start_url": "./index.html?source=pwa",
