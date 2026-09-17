@@ -1,0 +1,118 @@
+{
+  "version": "YYYY-MM-DD-custom",
+  "elements": [
+    "無属性",
+    "火",
+    "水",
+    "雷",
+    "氷",
+    "龍",
+    "毒",
+    "麻痺",
+    "睡眠",
+    "爆破"
+  ],
+  "weapons": [
+    {
+      "id": "custom_weapon_1",
+      "name": "武器名",
+      "type": "大剣",
+      "grade": "G10",
+      "attack": 1000,
+      "affinity": 0,
+      "element": "火",
+      "elementValue": 500,
+      "skills": {
+        "攻撃": 1
+      },
+      "source": "https://example.com"
+    }
+  ],
+  "skills": {
+    "攻撃": {
+      "max": 5,
+      "fire": 1
+    },
+    "見切り": {
+      "max": 5,
+      "fire": 1
+    },
+    "ロックオン": {
+      "max": 1
+    }
+  },
+  "armors": [
+    {
+      "id": "armor_head_1",
+      "slot": "head",
+      "name": "防具名",
+      "monster": "対象モンスター",
+      "grade": "G8",
+      "drift": 1,
+      "skills": {
+        "見切り": 1
+      },
+      "source": "https://example.com/equipment",
+      "monsterSource": "https://example.com/monster",
+      "materials": [
+        {
+          "name": "素材名A",
+          "qty": 10,
+          "rarity": 1,
+          "source": "対象モンスター討伐"
+        },
+        {
+          "name": "素材名B",
+          "qty": 2,
+          "rarity": 4,
+          "source": "採集/討伐"
+        }
+      ]
+    },
+    {
+      "id": "armor_chest_1",
+      "slot": "chest",
+      "name": "胴防具",
+      "monster": "対象",
+      "grade": "G8",
+      "drift": 1,
+      "skills": {}
+    },
+    {
+      "id": "armor_arms_1",
+      "slot": "arms",
+      "name": "腕防具",
+      "monster": "対象",
+      "grade": "G8",
+      "drift": 1,
+      "skills": {}
+    },
+    {
+      "id": "armor_waist_1",
+      "slot": "waist",
+      "name": "腰防具",
+      "monster": "対象",
+      "grade": "G8",
+      "drift": 1,
+      "skills": {}
+    },
+    {
+      "id": "armor_legs_1",
+      "slot": "legs",
+      "name": "脚防具",
+      "monster": "対象",
+      "grade": "G8",
+      "drift": 1,
+      "skills": {}
+    }
+  ],
+  "materialsCatalog": {
+    "対象モンスター": [
+      {
+        "name": "素材名A",
+        "rarity": 1,
+        "source": "対象モンスター討伐"
+      }
+    ]
+  }
+}

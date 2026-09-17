@@ -1,0 +1,40 @@
+MH Now Build Lab v0.3 PWA - HTTPS配置手順
+
+PWA機能（ホーム画面アプリ・Service Worker・オフライン起動）にはHTTPS配信が必要です。
+
+【配置する内容】
+MHNow_Build_Lab_v0.3_PWA フォルダの中身を、同じ階層構造のままWebサーバーへ置きます。
+
+index.html
+manifest.webmanifest
+service-worker.js
+icons/
+  apple-touch-icon.png
+  icon-192.png
+  icon-512.png
+MHNow_Build_Lab_data_template.json
+
+【GitHub Pagesを使う場合の概略】
+1. 新しいRepositoryを作る
+2. このフォルダの「中身」をRepositoryのルートへ配置
+3. Repository Settings → Pages
+4. Deploy from a branch を選択
+5. main / root を選択して保存
+6. 発行された https://...github.io/.../ をiPhoneのSafariで開く
+7. Safariの共有 → ホーム画面に追加
+
+※ GitHub接続をChatGPTへ追加した場合は、Repository側の作業を進めるワークフローにも利用できます。
+
+【その他の静的ホスティング】
+Cloudflare Pages / Netlify / Vercel等でも、静的ファイルをHTTPS配信できれば動作します。
+ビルド処理は不要です。
+
+【更新】
+index.html等を更新するときは service-worker.js の CACHE_NAME も更新してください。
+現在: mhn-build-lab-v0.3.0
+例: 次版なら mhn-build-lab-v0.3.1
+
+【iPhone / iPad】
+初回はオンラインで起動してください。
+Safari → 共有（□↑）→ ホーム画面に追加 → 追加
+以降、主要ファイルがキャッシュ済みならオフラインでも起動できます。

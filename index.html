@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0a0f15">
+<meta name="format-detection" content="telephone=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MHN Build Lab">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512.png">
+<title>MH Now Build Lab v0.3 PWA</title>
+<style>
+:root{
+ --bg:#0a0f15;--panel:#121923;--panel2:#17212d;--line:#293747;--text:#edf3f8;--muted:#98a8b8;
+ --gold:#ffb51b;--gold2:#ffd873;--green:#66d5a4;--red:#ff7e7e;--blue:#7cc3ff;--purple:#c5a2ff;
+ --shadow:0 18px 46px rgba(0,0,0,.30)
+}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--text);background:
+radial-gradient(circle at 12% -10%,rgba(255,181,27,.12),transparent 34rem),
+radial-gradient(circle at 95% 0%,rgba(97,151,255,.08),transparent 28rem),var(--bg);
+font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif}
+button,input,select{font:inherit}button{cursor:pointer}.app{max-width:1440px;margin:auto;padding:16px}
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:13px}
+.brand{display:flex;gap:12px;align-items:center}.logo{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;
+background:linear-gradient(145deg,#ffd45e,#f48b00);color:#1a1100;font-weight:1000;box-shadow:0 8px 24px rgba(255,181,27,.22)}
+h1{margin:0;font-size:20px}.sub{font-size:12px;color:var(--muted);margin-top:3px}.header-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.btn{border:1px solid var(--line);background:#16202b;color:var(--text);padding:8px 11px;border-radius:10px;font-weight:800}
+.btn:hover{border-color:#526981;background:#1a2836}.btn.primary{background:linear-gradient(180deg,#ffc84d,#e89400);color:#191000;border-color:#ffb51b}
+.btn.danger{color:#ffabab;border-color:#61383b}.btn.good{color:#b5f4d8;border-color:#315b4a}.btn.small{font-size:12px;padding:6px 8px}
+.badge{display:inline-flex;align-items:center;padding:4px 7px;border-radius:999px;border:1px solid var(--line);font-size:11px;color:var(--muted);white-space:nowrap}
+.badge.gold{border-color:#65480e;background:#35270e;color:#ffd479}.badge.green{border-color:#245442;background:#102a21;color:#acf0d2}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);overflow:auto;margin-bottom:13px}.tab{border:0;background:transparent;color:var(--muted);
+padding:11px 13px;font-weight:900;border-bottom:3px solid transparent;white-space:nowrap}.tab.active{color:var(--text);border-bottom-color:var(--gold)}
+.layout{display:grid;grid-template-columns:380px minmax(0,1fr);gap:13px}.card{background:linear-gradient(180deg,rgba(23,32,43,.97),rgba(17,24,33,.97));
+border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}.hd{padding:12px 14px;border-bottom:1px solid var(--line);font-weight:900;
+display:flex;align-items:center;justify-content:space-between;gap:8px}.bd{padding:13px}.field{margin-bottom:11px}.field:last-child{margin-bottom:0}
+label{display:block;color:var(--muted);font-size:12px;font-weight:800;margin-bottom:5px}select,input[type=text],input[type=number]{
+width:100%;background:#0d141c;border:1px solid var(--line);color:var(--text);padding:9px;border-radius:9px;outline:none}
+select:focus,input:focus{border-color:#607d9b}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.between{display:flex;justify-content:space-between;gap:9px;align-items:center}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0}.toggle input{accent-color:var(--gold);width:20px;height:20px}
+input[type=range]{width:100%;accent-color:var(--gold)}.slider-head{display:flex;justify-content:space-between;font-size:12px;font-weight:800;color:var(--muted)}
+.note{font-size:11.5px;line-height:1.55;color:var(--muted)}.warn{font-size:12px;line-height:1.55;padding:10px 11px;border-radius:10px;background:#36270f;
+border:1px solid #65470f;color:#ffda8b}.info{font-size:12px;line-height:1.55;padding:10px 11px;border-radius:10px;background:#112a31;border:1px solid #24525e;color:#b4e9f5}
+.ok{font-size:12px;line-height:1.55;padding:10px 11px;border-radius:10px;background:#102b22;border:1px solid #285a48;color:#b3f0d7}
+details.adv{border:1px solid var(--line);border-radius:10px;margin-top:10px}details.adv summary{padding:9px 10px;font-size:12px;font-weight:900;cursor:pointer;color:#cbd7e4}
+details.adv .inside{padding:0 10px 10px}.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:11px}.stat{border:1px solid var(--line);background:#0e151d;
+padding:9px 10px;border-radius:11px}.stat b{font-size:18px}.stat span{display:block;font-size:10.5px;color:var(--muted);margin-top:2px}
+.results{display:flex;flex-direction:column;gap:8px}.result{border:1px solid var(--line);background:#0e161f;border-radius:12px;padding:11px;
+display:grid;grid-template-columns:58px minmax(0,1fr) 120px;gap:10px;align-items:center}.result:hover{border-color:#536a83}.rank{text-align:center;font-size:23px;font-weight:1000;color:var(--gold2)}
+.equip{font-size:12px;line-height:1.6}.score{text-align:right;font-size:19px;font-weight:1000}.score small{display:block;font-size:10px;color:var(--muted);font-weight:700}
+.chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}.chip{border:1px solid #33465a;background:#182432;color:#dbe6f1;border-radius:999px;padding:3px 6px;font-size:10.5px}
+.chip.fire{background:#38290f;border-color:#654710;color:#ffd57d}.chip.req{background:#102d43;border-color:#25597b;color:#a9ddff}.chip.drift{background:#2c2040;border-color:#594174;color:#dcc5ff}
+.result-actions{display:flex;justify-content:flex-end;gap:5px;margin-top:6px}.empty{padding:30px 14px;text-align:center;color:var(--muted);font-size:12px}
+.req-add{display:grid;grid-template-columns:minmax(0,1fr) 64px auto;gap:7px}.req-list{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px}.req{
+display:flex;align-items:center;gap:5px;border:1px solid #2f526f;background:#12263a;border-radius:999px;padding:4px 7px;font-size:11px}.req button{border:0;background:transparent;color:#ff9d9d;font-weight:900}
+.drift-pool{display:grid;grid-template-columns:1fr 1fr;gap:5px}.check{display:flex;gap:6px;align-items:center;font-size:11px;color:#d3deea}.check input{accent-color:var(--purple)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;padding:14px;z-index:40}.modal.open{display:flex}
+.dialog{width:min(980px,100%);max-height:94vh;overflow:auto;background:#111923;border:1px solid #3e536a;border-radius:16px;box-shadow:0 30px 100px rgba(0,0,0,.58)}
+.dialog-top{position:sticky;top:0;z-index:2;background:#16212c;border-bottom:1px solid var(--line);padding:12px 13px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.dialog-body{padding:13px}.detail-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:11px}.slot{display:grid;grid-template-columns:50px minmax(0,1fr) auto;gap:8px;align-items:center;
+padding:8px 0;border-bottom:1px solid #263544}.slot:last-child{border-bottom:0}.slot-label{font-size:11px;color:var(--muted);font-weight:900}
+.table{width:100%;border-collapse:collapse;font-size:11px}.table td,.table th{padding:7px;border-bottom:1px solid #263544;text-align:left}.table td:last-child,.table th:last-child{text-align:right}
+.mysets,.compare-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:9px}.set{padding:12px}.set h3{font-size:14px;margin:0 0 4px}.meta{font-size:11px;color:var(--muted)}
+.pill{display:inline-flex;margin:4px 4px 0 0;padding:3px 6px;border-radius:999px;border:1px solid var(--line);background:#0e151d;font-size:10.5px}
+.ex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:7px}.ex{padding:9px;border:1px solid var(--line);border-radius:10px;background:#0e151d;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.guide{max-width:980px}.guide h2{font-size:18px;margin:18px 0 8px}.guide h3{font-size:14px;margin:14px 0 6px}.guide ol,.guide ul{line-height:1.75;color:#d7e1eb;font-size:13px}
+.material-group{margin-bottom:11px}.material-group h3{font-size:13px;margin:0 0 6px}.material-item{display:grid;grid-template-columns:minmax(0,1fr) 90px;gap:8px;padding:7px 0;border-bottom:1px solid #263544;font-size:11px}
+.searchbox{display:grid;grid-template-columns:minmax(0,1fr) 140px;gap:7px}.source-link{color:#9fd7ff;text-decoration:none}.source-link:hover{text-decoration:underline}
+.progress{height:8px;background:#0d141c;border:1px solid var(--line);border-radius:999px;overflow:hidden}.progress>span{display:block;height:100%;background:linear-gradient(90deg,#e89b00,#ffd65f)}
+.hide{display:none!important}footer{font-size:10.5px;line-height:1.55;color:#7f90a1;margin:16px 2px 3px}
+@media(max-width:960px){.layout{grid-template-columns:1fr}.stats{grid-template-columns:repeat(3,1fr)}.detail-grid{grid-template-columns:1fr}}
+@media(max-width:620px){.app{padding:9px}.header-actions .textbtn{display:none}.grid2,.grid3{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.result{grid-template-columns:44px minmax(0,1fr)}
+.score{grid-column:2;text-align:left}.req-add{grid-template-columns:1fr 58px}.req-add button{grid-column:1/-1}.drift-pool{grid-template-columns:1fr}.searchbox{grid-template-columns:1fr}}
+
+/* v0.3 PWA / iOS */
+html,body{min-height:100%;min-height:100dvh;overscroll-behavior-y:none}
+body{-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;touch-action:manipulation}
+.app{padding-top:max(16px,env(safe-area-inset-top));padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));padding-bottom:max(16px,env(safe-area-inset-bottom))}
+button,.tab,.bottom-tab{-webkit-user-select:none;user-select:none}
+.dialog{-webkit-overflow-scrolling:touch;overscroll-behavior:contain;max-height:calc(100dvh - max(28px,env(safe-area-inset-top)) - max(28px,env(safe-area-inset-bottom)))}
+.net.offline{border-color:#6a4a13;background:#35270e;color:#ffd479}.net.online{border-color:#245442;background:#102a21;color:#acf0d2}
+.bottom-tabs{display:none}
+.install-help{font-size:13px;line-height:1.75}.install-help .step{border:1px solid var(--line);background:#0e151d;border-radius:12px;padding:10px 12px;margin:8px 0}.install-help .num{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--gold);color:#1b1200;font-weight:1000;margin-right:7px}
+.pwa-row{display:grid;grid-template-columns:140px minmax(0,1fr);gap:8px;padding:8px 0;border-bottom:1px solid #263544;font-size:12px}.pwa-row:last-child{border-bottom:0}.pwa-row span:first-child{color:var(--muted);font-weight:800}
+@media(max-width:760px){
+ body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+ .app{padding-top:max(9px,env(safe-area-inset-top));padding-left:max(9px,env(safe-area-inset-left));padding-right:max(9px,env(safe-area-inset-right));padding-bottom:12px}
+ header{align-items:center}.brand{min-width:0}.brand h1{font-size:17px}.brand .sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:58vw}
+ .tabs{display:none}
+ .bottom-tabs{position:fixed;z-index:35;left:0;right:0;bottom:0;display:flex;overflow-x:auto;gap:0;background:rgba(13,20,28,.94);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--line);padding:4px max(4px,env(safe-area-inset-right)) calc(4px + env(safe-area-inset-bottom)) max(4px,env(safe-area-inset-left));scrollbar-width:none}
+ .bottom-tabs::-webkit-scrollbar{display:none}.bottom-tab{min-width:76px;flex:1 0 76px;border:0;background:transparent;color:var(--muted);padding:7px 5px 5px;border-radius:9px;font-size:10px;font-weight:900;line-height:1.15;min-height:48px}.bottom-tab .ico{display:block;font-size:18px;margin-bottom:3px}.bottom-tab.active{color:var(--gold2);background:#1a2430}
+ .btn{min-height:44px}.btn.small{min-height:38px}.header-actions .installbtn{min-height:38px}.result{min-height:64px}
+ select,input[type=text],input[type=number],input[type=file]{font-size:16px}
+ .modal{padding:max(8px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));align-items:flex-end}
+ .dialog{width:100%;max-height:88dvh;border-radius:18px 18px 10px 10px}
+ .dialog-top{padding-top:12px}
+}
+@media(display-mode:standalone){.pwa-browser-only{display:none!important}}
+
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+ <div class="brand"><div class="logo">MH</div><div><h1>MH Now Build Lab <span class="badge gold">v0.3 PWA</span></h1>
+ <div class="sub">火力ランキング / スキル検索 / 漂移錬成 / 比較 / 素材 / iOS PWA</div></div></div>
+ <div class="header-actions">
+  <span class="badge net online" id="networkBadge">オンライン</span>
+  <span class="badge green textbtn">基準 2026-09-18</span>
+  <button class="btn small installbtn pwa-browser-only" id="installBtn">ホーム画面</button>
+  <button class="btn small textbtn" id="exportBtn">バックアップ</button>
+  <button class="btn small textbtn" id="importBtn">読込</button>
+  <input id="importFile" class="hide" type="file" accept=".json,application/json">
+ </div>
+</header>
+
+<nav class="tabs">
+ <button class="tab active" data-tab="power">最大威力</button>
+ <button class="tab" data-tab="skill">スキル指定</button>
+ <button class="tab" data-tab="compare">比較</button>
+ <button class="tab" data-tab="materials">素材</button>
+ <button class="tab" data-tab="mysets">マイセット</button>
+ <button class="tab" data-tab="data">除外・データ</button>
+ <button class="tab" data-tab="guide">操作ガイド</button>
+</nav>
+
+<section class="pane" id="pane-power">
+ <div class="layout">
+  <aside class="card"><div class="hd">検索条件 <span id="comboBadge" class="badge">0構成</span></div><div class="bd">
+   <div class="field"><label>武器</label><select id="weaponSelect"></select></div>
+   <div class="grid2">
+    <div class="field"><label>攻撃力</label><input id="rawInput" type="number" min="0"></div>
+    <div class="field"><label>会心率 %</label><input id="affInput" type="number" min="-100" max="100"></div>
+   </div>
+   <div class="grid2">
+    <div class="field"><label>属性</label><select id="elementSelect"></select></div>
+    <div class="field"><label>属性値</label><input id="elemInput" type="number" min="0"></div>
+   </div>
+   <div class="toggle"><div><b style="font-size:12px">弱点属性として計算</b><div class="note">OFF時は属性値を火力指数から除外</div></div><input id="weakElement" type="checkbox" checked></div>
+   <div class="toggle"><div><b style="font-size:12px">グループ狩猟</b><div class="note">グループハント強化【攻撃】等の条件計算用</div></div><input id="groupHunt" type="checkbox"></div>
+
+   <details class="adv" open><summary>発動率・立ち回り</summary><div class="inside" id="uptimeSliders"></div></details>
+
+   <details class="adv" open><summary>漂移錬成</summary><div class="inside">
+    <div class="field"><label>計算モード</label><select id="driftMode">
+      <option value="none">漂移錬成なし</option>
+      <option value="auto" selected>自動最適化</option>
+      <option value="manual">指定スキルを加算</option>
+    </select></div>
+    <div id="autoDriftBox">
+      <div class="note" style="margin-bottom:6px">候補から各構成の漂移スロット数以内で最も高い火力指数を探索します。候補は最大6種類。</div>
+      <div id="driftPool" class="drift-pool"></div>
+    </div>
+    <div id="manualDriftBox" class="hide">
+      <div class="req-add"><select id="manualDriftSkill"></select><input id="manualDriftLevel" type="number" min="1" max="5" value="1"><button class="btn small" id="addManualDrift">追加</button></div>
+      <div id="manualDriftList" class="req-list"></div>
+    </div>
+   </div></details>
+   <button id="powerSearch" class="btn primary" style="width:100%;margin-top:10px">最大威力構成を検索</button>
+   <div class="warn" style="margin-top:10px">「火力指数」は防具構成比較用。モーション値・肉質・弾種/砲撃・武器スタイル・状態異常の総DPSはまだ別モデルです。</div>
+  </div></aside>
+  <main>
+   <div class="stats">
+    <div class="stat"><b id="stEvaluated">0</b><span>評価構成</span></div>
+    <div class="stat"><b id="stBest">-</b><span>最高指数</span></div>
+    <div class="stat"><b id="stDrift">0</b><span>最高構成の漂移枠</span></div>
+    <div class="stat"><b id="stExcluded">0</b><span>除外装備</span></div>
+    <div class="stat"><b id="stSaved">0</b><span>マイセット</span></div>
+   </div>
+   <div class="card"><div class="hd"><span>火力ランキング</span><span class="note">上位50件 / 行クリックで詳細</span></div><div class="bd"><div id="powerResults" class="results"></div></div></div>
+  </main>
+ </div>
+</section>
+
+<section class="pane hide" id="pane-skill">
+ <div class="layout">
+  <aside class="card"><div class="hd">欲しいスキル</div><div class="bd">
+   <div class="req-add"><select id="skillPicker"></select><input id="skillLevel" type="number" min="1" max="5" value="1"><button id="addSkill" class="btn small">追加</button></div>
+   <div id="reqList" class="req-list"></div>
+   <div class="field"><label>並び順</label><select id="skillSort"><option value="score">火力指数が高い順</option><option value="extra">余剰スキルが少ない順</option><option value="slots">漂移残り枠が多い順</option></select></div>
+   <div class="note">漂移モードは「最大威力」タブと共通です。自動最適化では、指定スキルを満たす漂移割当も探索します。</div>
+   <button id="skillSearch" class="btn primary" style="width:100%;margin-top:10px">条件を満たす構成を検索</button>
+  </div></aside>
+  <main class="card"><div class="hd"><span>検索結果</span><span id="skillCount" class="badge">0件</span></div><div class="bd"><div id="skillResults" class="results"></div></div></main>
+ </div>
+</section>
+
+<section class="pane hide" id="pane-compare">
+ <div class="card"><div class="hd"><span>構成比較</span><div class="row"><span class="note">最大3件</span><button id="clearCompare" class="btn small danger">クリア</button></div></div>
+ <div class="bd"><div id="compareGrid" class="compare-grid"></div><div id="compareTableWrap" style="margin-top:12px"></div></div></div>
+</section>
+
+<section class="pane hide" id="pane-materials">
+ <div class="grid2">
+  <div class="card"><div class="hd">素材集計対象</div><div class="bd">
+   <div class="field"><label>マイセット</label><select id="materialSet"></select></div>
+   <button id="calcMaterials" class="btn primary" style="width:100%">素材・入手先を集計</button>
+   <div class="info" style="margin-top:10px">内蔵データは「装備の関連モンスター/主な入手先」を収録。強化段階ごとの正確な必要個数は一部未収録です。JSONマスターに materials を追加すれば自動合算されます。</div>
+  </div></div>
+  <div class="card"><div class="hd">集計結果</div><div class="bd" id="materialResults"><div class="empty">マイセットを選択して集計してください。</div></div></div>
+ </div>
+</section>
+
+<section class="pane hide" id="pane-mysets">
+ <div class="card"><div class="hd"><span>マイセット</span><button id="clearSets" class="btn small danger">全削除</button></div><div class="bd"><div id="mysetsGrid" class="mysets"></div></div></div>
+</section>
+
+<section class="pane hide" id="pane-data">
+ <div class="grid2">
+  <div class="card"><div class="hd"><span>除外装備</span><button id="clearExcluded" class="btn small">全解除</button></div><div class="bd">
+   <div class="searchbox"><input id="armorSearch" type="text" placeholder="装備名・モンスターで検索"><select id="armorSlotFilter"><option value="">全部位</option><option value="head">頭</option><option value="chest">胴</option><option value="arms">腕</option><option value="waist">腰</option><option value="legs">脚</option></select></div>
+   <div id="armorCatalog" class="ex-grid" style="margin-top:9px"></div>
+  </div></div>
+  <div class="card"><div class="hd">データマスター</div><div class="bd">
+   <div class="ok"><b>内蔵マスター:</b> <span id="dataVersion"></span><br>公式公開情報で確認した主要装備を収録。外部JSON読込で武器・防具・スキル・素材を追加/置換できます。</div>
+   <div class="field" style="margin-top:11px"><label>JSONマスター読込</label><input id="masterFile" type="file" accept=".json,application/json"></div>
+   <button id="resetMaster" class="btn" style="width:100%">内蔵マスターに戻す</button>
+   <div class="note" style="margin-top:10px">※ゲーム更新後に装備性能が変わる可能性があります。各詳細画面の「公式」リンクで原情報を確認できます。</div>
+   <div class="card" style="margin-top:11px;box-shadow:none"><div class="hd">PWA / iOS 状態</div><div class="bd">
+    <div class="pwa-row"><span>起動モード</span><b id="pwaMode">確認中</b></div>
+    <div class="pwa-row"><span>オフラインキャッシュ</span><b id="swStatus">確認中</b></div>
+    <div class="pwa-row"><span>端末保存</span><b id="storageStatus">確認中</b></div>
+    <div class="row" style="margin-top:10px"><button class="btn small pwa-browser-only" id="installBtn2">ホーム画面へ追加</button><button class="btn small" id="refreshCache">キャッシュ更新</button></div>
+   </div></div>
+  </div></div>
+ </div>
+</section>
+
+<section class="pane hide" id="pane-guide">
+ <div class="card guide"><div class="hd">簡単な操作法</div><div class="bd">
+  <div class="ok"><b>最短手順:</b> ①武器を選ぶ → ②必要なら発動率/漂移を調整 → ③「最大威力構成を検索」 → ④上位構成を開く → ⑤マイセット保存。</div>
+  <h2>1. 最大威力ランキング</h2>
+  <ol><li>「最大威力」タブで武器を選びます。攻撃力・会心・属性値は手入力で上書きできます。</li>
+  <li>弱点属性なら「弱点属性として計算」をONにします。</li><li>弱点特効・連撃など、常時発動しないスキルは「発動率・立ち回り」で実戦の割合に合わせます。</li>
+  <li>漂移錬成は「なし / 自動最適化 / 指定加算」から選択します。</li><li>検索後、行をタップすると装備・スキル・計算内訳・入手先を確認できます。</li></ol>
+  <h2>2. スキル指定検索</h2>
+  <ol><li>「スキル指定」タブでスキルとLvを追加します。</li><li>複数条件を追加して「条件を満たす構成を検索」。武器スキルと漂移錬成も合算します。</li></ol>
+  <h2>3. 比較・除外・マイセット</h2>
+  <ul><li>構成詳細の「比較に追加」で最大3構成を横並び比較できます。</li><li>防具の「除外」を押すと、以後の検索候補から外れます。「除外・データ」タブで解除できます。</li>
+  <li>「マイセット登録」でブラウザ内に保存します。データはこの端末/ブラウザの localStorage に保持されます。</li></ul>
+  <h2>4. 素材・入手先</h2>
+  <ol><li>気に入った構成をマイセットへ登録します。</li><li>「素材」タブでマイセットを選び集計します。</li><li>必要個数がマスター登録済みの素材は合算、未登録装備は関連モンスター/公式参照先を表示します。</li></ol>
+  <h2>5. iPhone / iPad でアプリ化</h2>
+  <ol><li>このPWAを <b>HTTPSのURL</b> からSafariで開きます。</li><li>Safariの共有ボタンを押し、「ホーム画面に追加」を選びます。</li><li>ホーム画面の <b>MHN Build Lab</b> アイコンから起動します。一度オンラインで起動後、主要画面はオフラインでも利用できます。</li></ol>
+  <div class="warn">HTMLファイルを「ファイル」アプリから直接開く方法ではPWAのオフライン機能は有効になりません。Webサーバーへ配置してHTTPSで開いてください。</div>
+  <h2>6. バックアップ</h2>
+  <ul><li>「バックアップ」は対応端末ではiOSの共有シートを開き、JSONを「ファイルに保存」等へ渡せます。</li><li>共有シート非対応環境では通常のJSONダウンロードに自動で切り替わります。</li><li>「読込」で復元できます。外部装備マスターは「除外・データ」から読み込みます。</li></ul>
+  <h2>計算上の注意</h2>
+  <p class="note">火力指数は「攻撃力＋弱点時属性値」を軸に、会心・属性会心・攻撃系スキル・指定発動率を期待値化した比較指標です。武器固有のモーション値、弾/矢、砲撃、スタイル、部位肉質、状態異常蓄積などはまだ完全な実DPS計算ではありません。</p>
+ </div></div>
+</section>
+
+<footer>Monster Hunter Now は CAPCOM / Scopely 等の権利物です。本ツールは非公式の個人用シミュレータです。v0.3 PWA / 装備データ基準: 2026-09-18。ゲーム更新時は公式表示を優先してください。</footer>
+</div>
+
+
+<nav class="bottom-tabs" aria-label="モバイルナビゲーション">
+ <button class="bottom-tab active" data-tab="power"><span class="ico">⚔</span>最大威力</button>
+ <button class="bottom-tab" data-tab="skill"><span class="ico">✦</span>スキル</button>
+ <button class="bottom-tab" data-tab="compare"><span class="ico">≋</span>比較</button>
+ <button class="bottom-tab" data-tab="materials"><span class="ico">◇</span>素材</button>
+ <button class="bottom-tab" data-tab="mysets"><span class="ico">★</span>セット</button>
+ <button class="bottom-tab" data-tab="data"><span class="ico">⚙</span>設定</button>
+ <button class="bottom-tab" data-tab="guide"><span class="ico">?</span>ガイド</button>
+</nav>
+
+<div id="installModal" class="modal"><div class="dialog"><div class="dialog-top"><b>ホーム画面に追加</b><button id="installClose" class="btn small">閉じる</button></div><div class="dialog-body install-help">
+ <div id="installIosHelp">
+  <div class="ok"><b>iPhone / iPad Safari</b> では次の3操作でアプリ化できます。</div>
+  <div class="step"><span class="num">1</span>このページをSafariで開いた状態にします。</div>
+  <div class="step"><span class="num">2</span>Safariの <b>共有</b> ボタン（□に↑）を押します。</div>
+  <div class="step"><span class="num">3</span><b>「ホーム画面に追加」</b> → <b>「追加」</b> を選びます。</div>
+  <div class="note">ホーム画面から起動すると独立したアプリ画面になります。一度オンラインで開けば主要ファイルを端末へキャッシュします。</div>
+ </div>
+ <div id="installGenericHelp" class="hide"><div class="info">このブラウザでは自動インストール画面が利用できないため、ブラウザのメニューから「ホーム画面に追加」または「アプリをインストール」を選んでください。</div></div>
+</div></div></div>
+
+<div id="modal" class="modal"><div class="dialog"><div class="dialog-top"><b id="modalTitle">構成詳細</b><button id="modalClose" class="btn small">閉じる</button></div><div id="modalBody" class="dialog-body"></div></div></div>
+
+<script>
+"use strict";
+
+const BUILTIN = {
+ version:"2026-09-18-R2",
+ sourceNote:"Monster Hunter Now official equipment/skills pages; current subset verified 2026-09-18",
+ elements:["無属性","火","水","雷","氷","龍","毒","麻痺","睡眠","爆破"],
+ weapons:[
+  {id:"custom",name:"カスタム武器",type:"任意",grade:"手入力",attack:1764,affinity:0,element:"無属性",elementValue:0,skills:{},source:""},
+  {id:"astalos_ss_g10",name:"サルガナスレイピア+ 5",type:"片手剣",grade:"G10",attack:1138,affinity:20,element:"雷",elementValue:1156,skills:{"雷属性攻撃強化":1},source:"https://monsterhunternow.com/en/weapons/astalos_swordshield"},
+  {id:"astalos_gs_g10",name:"啼剣ライゼクス改 5",type:"大剣",grade:"G10",attack:1138,affinity:20,element:"雷",elementValue:1156,skills:{"雷属性攻撃強化":1},source:"https://monsterhunternow.com/en/weapons/astalos_greatsword"},
+  {id:"astalos_hbg_g10",name:"ワイバーンアサルト+ 5",type:"ヘビィボウガン",grade:"G10",attack:1138,affinity:20,element:"雷",elementValue:1156,skills:{"雷属性攻撃強化":1},source:"https://monsterhunternow.com/weapons/astalos_heavybowgun"},
+  {id:"namielle_ig_g10",name:"ヒュドロスアーケーン 5",type:"操虫棍",grade:"G10",attack:1328,affinity:20,element:"水",elementValue:1074,skills:{"狩人の結束":1,"弱点特効":1},source:"https://monsterhunternow.com/weapons/namielle_insectglaive"},
+  {id:"bishaten_hammer_g10",name:"大五光槌 5",type:"ハンマー",grade:"G10",attack:1764,affinity:0,element:"無属性",elementValue:0,skills:{"グループハント強化【攻撃】":2},source:"https://monsterhunternow.com/weapons/bishaten_hammer"}
+ ],
+ skills:{
+  "攻撃":{"max":5,"fire":1},"攻撃・境地":{"max":2,"fire":1},"見切り":{"max":5,"fire":1},"弱点特効":{"max":5,"fire":1},"超会心":{"max":5,"fire":1},
+  "連撃":{"max":5,"fire":1},"攻めの守勢":{"max":5,"fire":1},"力任せ":{"max":5,"fire":1},"会心撃【属性】":{"max":5,"fire":1},
+  "火属性攻撃強化":{"max":5,"fire":1},"水属性攻撃強化":{"max":5,"fire":1},"雷属性攻撃強化":{"max":5,"fire":1},"氷属性攻撃強化":{"max":5,"fire":1},"龍属性攻撃強化":{"max":5,"fire":1},
+  "火属性攻撃強化・境地":{"max":2,"fire":1},"水属性攻撃強化・境地":{"max":2,"fire":1},"雷属性攻撃強化・境地":{"max":2,"fire":1},"氷属性攻撃強化・境地":{"max":2,"fire":1},"龍属性攻撃強化・境地":{"max":2,"fire":1},
+  "滅尽龍の渇望":{"max":3,"fire":1},"闘気活性":{"max":5,"fire":1},"ジャスト巧撃【持続】":{"max":5,"fire":1},"闇討ち":{"max":5,"fire":1},"火事場力":{"max":5,"fire":1},
+  "力の解放":{"max":5,"fire":1},"キリンの雷角":{"max":3,"fire":1},"グループハント強化【攻撃】":{"max":5,"fire":1},
+  "ロックオン":{"max":1},"砲術":{"max":5},"ガード性能":{"max":5},"精霊の加護":{"max":5},"風圧耐性":{"max":3},"回避距離UP":{"max":3},
+  "根性":{"max":5},"背水防御":{"max":5},"破壊王":{"max":5},"KO術":{"max":5},"装填速度":{"max":3},"集中":{"max":5},"SPゲージ加速":{"max":3},
+  "泡沫の舞":{"max":3},"死中に活":{"max":5},"蓄積時攻撃強化":{"max":5},"狩人の結束":{"max":1},"巧撃":{"max":5},"絶対回避【SP】":{"max":3},
+  "炎王龍の爆塵":{"max":3},"不屈":{"max":5},"回避性能":{"max":3},"毒属性強化":{"max":5},"早業":{"max":3}
+ },
+ armors:[
+  {id:"kulu_head",slot:"head",name:"クルルヘルム",monster:"クルルヤック",grade:"G8",drift:1,skills:{"ロックオン":1,"見切り":1},source:"https://monsterhunternow.com/armor/kuluyaku_head",monsterSource:""},
+  {id:"nerg_head",slot:"head",name:"オーグヘルム",monster:"ネルギガンテ",grade:"G8",drift:1,skills:{"滅尽龍の渇望":1,"見切り":2,"回避性能":1},source:"https://monsterhunternow.com/armor/nergigante_head",monsterSource:"https://monsterhunternow.com/monsters/nergigante"},
+  {id:"kirin_head",slot:"head",name:"キリンホーン",monster:"キリン",grade:"G8",drift:1,skills:{"キリンの雷角":1,"ロックオン":1,"闘気活性":1},source:"https://monsterhunternow.com/armor/kirin_head",monsterSource:"https://monsterhunternow.com/monsters/kirin"},
+  {id:"kaiser_head",slot:"head",name:"カイザークラウン",monster:"テオ・テスカトル",grade:"G8",drift:1,skills:{"炎王龍の爆塵":1,"力の解放":2,"根性":1},source:"https://monsterhunternow.com/armor/teostra_head",monsterSource:""},
+  {id:"astalos_head",slot:"head",name:"ゼクスヘルム",monster:"ライゼクス",grade:"G8",drift:1,skills:{"雷属性攻撃強化・境地":1,"装填速度":1,"雷属性攻撃強化":1},source:"https://monsterhunternow.com/armor/astalos_head",monsterSource:"https://monsterhunternow.com/monsters/astalos"},
+  {id:"mizu_head",slot:"head",name:"ミツネヘルム",monster:"タマミツネ",grade:"G8",drift:1,skills:{"水属性攻撃強化":2},source:"https://monsterhunternow.com/armor/mizutsune_head",monsterSource:""},
+
+  {id:"rath_chest",slot:"chest",name:"レウスメイル",monster:"リオレウス",grade:"G8",drift:1,skills:{"弱点特効":2},source:"https://monsterhunternow.com/armor/rathalos_chest",monsterSource:""},
+  {id:"kaiser_chest",slot:"chest",name:"カイザーメイル",monster:"テオ・テスカトル",grade:"G8",drift:1,skills:{"炎王龍の爆塵":1,"見切り":2,"回避性能":1},source:"https://monsterhunternow.com/armor/teostra_chest",monsterSource:""},
+  {id:"kirin_chest",slot:"chest",name:"キリンジャケット",monster:"キリン",grade:"G8",drift:1,skills:{"キリンの雷角":1,"超会心":1,"見切り":1},source:"https://monsterhunternow.com/armor/kirin_chest",monsterSource:"https://monsterhunternow.com/monsters/kirin"},
+  {id:"glav_chest",slot:"chest",name:"ディノメイル",monster:"ディノバルド",grade:"G8",drift:1,skills:{"ロックオン":1,"力任せ":2},source:"https://monsterhunternow.com/armor/glavenus_chest",monsterSource:""},
+  {id:"narga_chest",slot:"chest",name:"ナルガメイル",monster:"ナルガクルガ",grade:"G8",drift:1,skills:{"超会心":2,"ロックオン":1},source:"https://monsterhunternow.com/en/armor/nargacuga_chest",monsterSource:""},
+  {id:"nerg_chest",slot:"chest",name:"オーグメイル",monster:"ネルギガンテ",grade:"G8",drift:1,skills:{"滅尽龍の渇望":1,"闇討ち":2,"回避距離UP":1},source:"https://monsterhunternow.com/armor/nergigante_chest",monsterSource:"https://monsterhunternow.com/monsters/nergigante"},
+  {id:"astalos_chest",slot:"chest",name:"ゼクスメイル",monster:"ライゼクス",grade:"G8",drift:1,skills:{"雷属性攻撃強化・境地":1,"絶対回避【SP】":2},source:"https://monsterhunternow.com/armor/astalos_chest",monsterSource:"https://monsterhunternow.com/monsters/astalos"},
+
+  {id:"rathian_arms",slot:"arms",name:"レイアアーム",monster:"リオレイア",grade:"G8",drift:1,skills:{"ロックオン":1,"連撃":2},source:"https://monsterhunternow.com/armor/rathian_arms",monsterSource:""},
+  {id:"glav_arms",slot:"arms",name:"ディノアーム",monster:"ディノバルド",grade:"G8",drift:1,skills:{"弱点特効":2},source:"https://monsterhunternow.com/armor/glavenus_arms",monsterSource:""},
+  {id:"kaiser_arms",slot:"arms",name:"カイザーアーム",monster:"テオ・テスカトル",grade:"G8",drift:1,skills:{"炎王龍の爆塵":1,"砲術":2,"ガード性能":1},source:"https://monsterhunternow.com/armor/teostra_arms",monsterSource:""},
+  {id:"kirin_arms",slot:"arms",name:"キリンアーム",monster:"キリン",grade:"G8",drift:1,skills:{"キリンの雷角":1,"超会心":1,"弱点特効":1},source:"https://monsterhunternow.com/armor/kirin_arms",monsterSource:"https://monsterhunternow.com/monsters/kirin"},
+  {id:"azure_arms",slot:"arms",name:"リオソウルアーム",monster:"リオレウス亜種",grade:"G8",drift:1,skills:{"超会心":2},source:"https://monsterhunternow.com/armor/azure_rathalos_arms",monsterSource:""},
+  {id:"nerg_arms",slot:"arms",name:"オーグアーム",monster:"ネルギガンテ",grade:"G8",drift:1,skills:{"滅尽龍の渇望":1,"攻めの守勢":1,"ガード性能":1},source:"https://monsterhunternow.com/armor/nergigante_arms",monsterSource:"https://monsterhunternow.com/monsters/nergigante"},
+  {id:"astalos_arms",slot:"arms",name:"ゼクスアーム",monster:"ライゼクス",grade:"G8",drift:1,skills:{"雷属性攻撃強化・境地":1,"絶対回避【SP】":1,"ジャスト巧撃【持続】":1},source:"https://monsterhunternow.com/armor/astalos_arms",monsterSource:"https://monsterhunternow.com/monsters/astalos"},
+
+  {id:"kaiser_waist",slot:"waist",name:"カイザーコイル",monster:"テオ・テスカトル",grade:"G8",drift:1,skills:{"炎王龍の爆塵":1,"連撃":2},source:"https://monsterhunternow.com/armor/teostra_waist",monsterSource:""},
+  {id:"pink_waist",slot:"waist",name:"リオハートコイル",monster:"リオレイア亜種",grade:"G8",drift:1,skills:{"見切り":2},source:"https://monsterhunternow.com/armor/pink_rathian_waist",monsterSource:""},
+  {id:"astalos_waist",slot:"waist",name:"ゼクスコイル",monster:"ライゼクス",grade:"G8",drift:1,skills:{"雷属性攻撃強化・境地":1,"会心撃【属性】":1,"見切り":1},source:"https://monsterhunternow.com/armor/astalos_waist",monsterSource:"https://monsterhunternow.com/monsters/astalos"},
+  {id:"diablos_waist",slot:"waist",name:"ディアブロコイル",monster:"ディアブロス",grade:"G8",drift:1,skills:{"破壊王":1,"攻めの守勢":2},source:"https://monsterhunternow.com/armor/diablos_waist",monsterSource:""},
+  {id:"nerg_waist",slot:"waist",name:"オーグコイル",monster:"ネルギガンテ",grade:"G8",drift:1,skills:{"滅尽龍の渇望":1,"攻撃":2,"破壊王":1},source:"https://monsterhunternow.com/armor/nergigante_waist",monsterSource:"https://monsterhunternow.com/monsters/nergigante"},
+  {id:"kulu_waist",slot:"waist",name:"クルルコイル",monster:"クルルヤック",grade:"G8",drift:2,skills:{"背水防御":1,"回避距離UP":1},source:"https://monsterhunternow.com/armor/kuluyaku_waist",monsterSource:""},
+  {id:"mizu_waist",slot:"waist",name:"ミツネコイル",monster:"タマミツネ",grade:"G8",drift:1,skills:{"SPゲージ加速":2},source:"https://monsterhunternow.com/en/armor/mizutsune_waist",monsterSource:""},
+
+  {id:"kaiser_legs",slot:"legs",name:"カイザーグリーヴ",monster:"テオ・テスカトル",grade:"G8",drift:1,skills:{"炎王龍の爆塵":1,"超会心":2,"回避距離UP":1},source:"https://monsterhunternow.com/armor/teostra_legs",monsterSource:""},
+  {id:"kulu_legs",slot:"legs",name:"クルルグリーヴ",monster:"クルルヤック",grade:"G8",drift:1,skills:{"見切り":2},source:"https://monsterhunternow.com/armor/kuluyaku_legs",monsterSource:""},
+  {id:"silver_legs",slot:"legs",name:"シルバーソルグリーヴ",monster:"リオレウス希少種",grade:"G8",drift:1,skills:{"会心撃【属性】":1,"弱点特効":1},source:"https://monsterhunternow.com/armor/silver_rathalos_legs",monsterSource:""},
+  {id:"fulgur_legs",slot:"legs",name:"ジャナールグリーヴ",monster:"アンジャナフ亜種",grade:"G8",drift:1,skills:{"SPゲージ加速":2,"力任せ":1},source:"https://monsterhunternow.com/armor/fulgur_anjanath_legs",monsterSource:""},
+  {id:"astalos_legs",slot:"legs",name:"ゼクスグリーヴ",monster:"ライゼクス",grade:"G8",drift:1,skills:{"雷属性攻撃強化・境地":1,"雷属性攻撃強化":2},source:"https://monsterhunternow.com/armor/astalos_legs",monsterSource:"https://monsterhunternow.com/monsters/astalos"},
+  {id:"rath_legs",slot:"legs",name:"レウスグリーヴ",monster:"リオレウス",grade:"G8",drift:1,skills:{"弱点特効":1},source:"https://monsterhunternow.com/armor/rathalos_legs",monsterSource:""}
+ ],
+ materialsCatalog:{
+  "ライゼクス":[
+   {name:"ライゼクスの鱗",rarity:1,source:"ライゼクス討伐"},{name:"ライゼクスの甲殻",rarity:1,source:"ライゼクス討伐"},
+   {name:"ライゼクスの尻尾",rarity:2,source:"ライゼクス討伐"},{name:"ライゼクスの冠甲",rarity:3,source:"ライゼクス討伐"},
+   {name:"ライゼクスの翼膜",rarity:4,source:"ライゼクス討伐"},{name:"ライゼクスの翼爪",rarity:5,source:"ライゼクス討伐"},
+   {name:"ライゼクスの天鱗",rarity:6,source:"ライゼクス討伐"},{name:"竜玉系R6",rarity:6,source:"対象高難度モンスター"}
+  ],
+  "キリン":[{name:"キリンの雷角",rarity:3,source:"キリン討伐"},{name:"キリンの皮",rarity:3,source:"キリン討伐"},{name:"古龍の血",rarity:4,source:"古龍討伐"},{name:"キリンのたてがみ",rarity:5,source:"キリン討伐"},{name:"キリンの雷玉",rarity:6,source:"キリン討伐"}],
+  "ネルギガンテ":[{name:"不滅の龍鱗",rarity:3,source:"ネルギガンテ討伐"},{name:"滅尽龍の甲殻",rarity:3,source:"ネルギガンテ討伐"},{name:"古龍の血",rarity:4,source:"古龍討伐"},{name:"滅尽龍の尻尾",rarity:5,source:"ネルギガンテ討伐"},{name:"滅尽龍の大角",rarity:6,source:"ネルギガンテ討伐"}]
+ }
+};
+
+let DB = JSON.parse(JSON.stringify(BUILTIN));
+const SLOT_ORDER=["head","chest","arms","waist","legs"];
+const SLOT_JA={head:"頭",chest:"胴",arms:"腕",waist:"腰",legs:"脚"};
+const STORAGE={ex:"mhnbl_v02_excluded",sets:"mhnbl_v02_sets",state:"mhnbl_v02_state"};
+let storageUsable=true;
+function readStoredJson(key,fallback){try{const raw=localStorage.getItem(key);return raw===null?fallback:JSON.parse(raw)}catch(e){storageUsable=false;return fallback}}
+function writeStoredJson(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true}catch(e){storageUsable=false;updatePwaStatus();return false}}
+let excluded=new Set(readStoredJson(STORAGE.ex,[]));
+let mysets=readStoredJson(STORAGE.sets,[]);
+let requirements={};
+let manualDrift={};
+let lastPower=[],lastSkill=[],compareList=[];
+let currentMaterialSetId="";
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
+
+const UPTIMES=[
+ {id:"wex",label:"弱点部位への攻撃率",value:100},
+ {id:"burst",label:"連撃の稼働率",value:100},
+ {id:"guard",label:"攻めの守勢の稼働率",value:0},
+ {id:"spirit",label:"闘気活性の稼働率",value:40},
+ {id:"dodger",label:"ジャスト巧撃【持続】の稼働率",value:25},
+ {id:"sneak",label:"闇討ちの稼働率",value:0},
+ {id:"latent",label:"力の解放の稼働率",value:40},
+ {id:"heroics",label:"火事場力の稼働率",value:0}
+];
+
+function maxLv(name){return DB.skills[name]?.max??5}
+function lv(tbl,l){return l>0?(tbl[Math.min(l,tbl.length)-1]??tbl[tbl.length-1]??0):0}
+function getUptime(id){const e=$("up_"+id);return e?+e.value/100:0}
+function elementSkill(el){return ["火","水","雷","氷","龍"].includes(el)?`${el}属性攻撃強化`:null}
+function elementAdvanced(el){return ["火","水","雷","氷","龍"].includes(el)?`${el}属性攻撃強化・境地`:null}
+
+function sumSkills(parts,weaponSkills={},drift={}){
+ const s={};
+ for(const src of [weaponSkills,...parts.map(x=>x.skills||{}),drift]){
+  for(const [k,v] of Object.entries(src||{})) s[k]=(s[k]||0)+(+v||0);
+ }
+ for(const k of Object.keys(s))s[k]=Math.min(s[k],maxLv(k));
+ return s;
+}
+
+function calcFromSkills(skills,weapon){
+ let raw=+weapon.attack||0, aff=+weapon.affinity||0, elem=+weapon.elementValue||0;
+ const baseAff=aff, b=[];
+ const atk=lv([50,100,150,200,300],skills["攻撃"]||0); if(atk){raw+=atk;b.push(["攻撃",`攻撃 +${atk}`])}
+ if((skills["攻撃"]||0)>=5){const v=lv([150,350],skills["攻撃・境地"]||0);if(v){raw+=v;b.push(["攻撃・境地",`攻撃 +${v}`])}}
+ const rp=skills["力任せ"]||0;if(rp){raw+=100*rp;aff-=5*rp;b.push(["力任せ",`攻撃 +${100*rp} / 会心 -${5*rp}%`])}
+ const ce=lv([10,15,20,30,40],skills["見切り"]||0);if(ce){aff+=ce;b.push(["見切り",`会心 +${ce}%`])}
+ const wex=lv([20,25,30,40,50],skills["弱点特効"]||0)*getUptime("wex");if(wex){aff+=wex;b.push(["弱点特効",`平均会心 +${wex.toFixed(1)}%`])}
+ const latent=lv([20,30,40,50,60],skills["力の解放"]||0)*getUptime("latent");if(latent){aff+=latent;b.push(["力の解放",`平均会心 +${latent.toFixed(1)}%`])}
+
+ if(skills["グループハント強化【攻撃】"] && $("groupHunt").checked){const v=80*skills["グループハント強化【攻撃】"];raw+=v;b.push(["グループハント強化【攻撃】",`グループ狩猟: 攻撃 +${v}`])}
+
+ const elemName=elementSkill(weapon.element);
+ if(elemName){const add=lv([50,100,200,350,500],skills[elemName]||0);if(add){elem+=add;b.push([elemName,`属性 +${add}`])}}
+ const advName=elementAdvanced(weapon.element);
+ if(advName && (skills[elemName]||0)>=5){const add=lv([200,400],skills[advName]||0);if(add){elem+=add;b.push([advName,`属性 +${add}`])}}
+ if(weapon.element==="雷" && skills["キリンの雷角"]){const mul=1+lv([.10,.15,.25],skills["キリンの雷角"]);elem*=mul;b.push(["キリンの雷角",`雷属性 ×${mul.toFixed(2)}`])}
+
+ const burst=lv([.05,.10,.15,.20,.30],skills["連撃"]||0)*getUptime("burst");if(burst){raw*=1+burst;b.push(["連撃",`平均物理 ×${(1+burst).toFixed(3)}`])}
+ const guard=lv([.10,.15,.20,.30,.40],skills["攻めの守勢"]||0)*getUptime("guard");if(guard){raw*=1+guard;b.push(["攻めの守勢",`平均物理 ×${(1+guard).toFixed(3)}`])}
+ const hero=lv([.10,.20,.30,.40,.50],skills["火事場力"]||0)*getUptime("heroics");if(hero){raw*=1+hero;b.push(["火事場力",`平均物理 ×${(1+hero).toFixed(3)}`])}
+
+ const critBoost=skills["超会心"]?lv([1.30,1.35,1.40,1.45,1.50],skills["超会心"]):1.25;
+ const effAff=clamp(aff,-100,100);
+ let critMul=effAff>=0?1+(effAff/100)*(critBoost-1):1+(Math.abs(effAff)/100)*(0.75-1);
+ let rawExp=raw*critMul;b.push(["会心期待値",`${effAff.toFixed(1)}% / 会心倍率 ${critBoost.toFixed(2)} → ×${critMul.toFixed(4)}`]);
+
+ if(effAff>0 && skills["会心撃【属性】"] && elem>0){
+  const inc=lv([.30,.40,.50,.60,.80],skills["会心撃【属性】"]);
+  const m=1+(effAff/100)*inc;elem*=m;b.push(["会心撃【属性】",`属性期待値 ×${m.toFixed(4)}`]);
+ }
+
+ const nerg=lv([.10,.15,.20],skills["滅尽龍の渇望"]||0);if(nerg){rawExp*=1+nerg;elem*=1+nerg;b.push(["滅尽龍の渇望",`ダメージ ×${(1+nerg).toFixed(2)}`])}
+ const fs=lv([.10,.15,.20,.25,.35],skills["闘気活性"]||0)*getUptime("spirit");if(fs){rawExp*=1+fs;elem*=1+fs;b.push(["闘気活性",`平均ダメージ ×${(1+fs).toFixed(3)}`])}
+ const od=lv([.10,.15,.20,.25,.35],skills["ジャスト巧撃【持続】"]||0)*getUptime("dodger");if(od){rawExp*=1+od;elem*=1+od;b.push(["ジャスト巧撃【持続】",`平均ダメージ ×${(1+od).toFixed(3)}`])}
+ const sn=lv([.10,.15,.20,.25,.30],skills["闇討ち"]||0)*getUptime("sneak");if(sn){rawExp*=1+sn;elem*=1+sn;b.push(["闇討ち",`平均ダメージ ×${(1+sn).toFixed(3)}`])}
+
+ const useElem=$("weakElement").checked && !["無属性","毒","麻痺","睡眠","爆破"].includes(weapon.element);
+ const elemExp=useElem?elem:0;
+ return {score:rawExp+elemExp,rawExpected:rawExp,elemExpected:elemExp,affinity:effAff,breakdown:b};
+}
+
+function currentWeapon(){
+ const preset=DB.weapons.find(w=>w.id===$("weaponSelect").value)||DB.weapons[0];
+ return {...preset,attack:+$("rawInput").value||0,affinity:+$("affInput").value||0,element:$("elementSelect").value,elementValue:+$("elemInput").value||0};
+}
+function setWeapon(w){$("rawInput").value=w.attack;$("affInput").value=w.affinity;$("elementSelect").value=w.element;$("elemInput").value=w.elementValue}
+function usable(slot){return DB.armors.filter(a=>a.slot===slot&&!excluded.has(a.id))}
+function driftSlots(parts){return parts.reduce((n,p)=>n+(+p.drift||0),0)}
+
+function selectedDriftCandidates(weapon){
+ const nodes=[...document.querySelectorAll("#driftPool input:checked")].map(x=>x.value);
+ return nodes.map(x=>x==="__ELEMENT__"?(elementSkill(weapon.element)||"攻撃"):x).filter((x,i,a)=>x&&a.indexOf(x)===i).slice(0,6);
+}
+function combine(base,add){const s={...base};for(const [k,v]of Object.entries(add||{}))s[k]=Math.min((s[k]||0)+v,maxLv(k));return s}
+function reqMet(skills,req){for(const [k,v]of Object.entries(req||{}))if((skills[k]||0)<v)return false;return true}
+
+const distroCache=new Map();
+function distributions(candidates,slots){
+ const key=candidates.join("|")+"#"+slots;if(distroCache.has(key))return distroCache.get(key);
+ const out=[],cur={};
+ function rec(i,left){
+  if(i===candidates.length){if(left===0)out.push({...cur});return}
+  const k=candidates[i],mx=Math.min(maxLv(k),left);
+  for(let n=0;n<=mx;n++){if(n)cur[k]=n;else delete cur[k];rec(i+1,left-n)}
+  delete cur[k];
+ }
+ for(let used=0;used<=slots;used++)rec(0,used);
+ distroCache.set(key,out);return out;
+}
+
+function evaluate(parts,weapon,req={}){
+ const base=sumSkills(parts,weapon.skills,{});
+ const slots=driftSlots(parts),mode=$("driftMode").value;
+ if(mode==="none"){
+  if(!reqMet(base,req))return null;
+  return {...calcFromSkills(base,weapon),skills:base,drift:{},slots,usedDrift:0};
+ }
+ if(mode==="manual"){
+  const used=Object.values(manualDrift).reduce((a,b)=>a+(+b||0),0);if(used>slots)return null;
+  const skills=combine(base,manualDrift);if(!reqMet(skills,req))return null;
+  return {...calcFromSkills(skills,weapon),skills,drift:{...manualDrift},slots,usedDrift:used};
+ }
+ const candidates=selectedDriftCandidates(weapon);
+ let best=null;
+ for(const add of distributions(candidates,slots)){
+  const skills=combine(base,add);if(!reqMet(skills,req))continue;
+  const c=calcFromSkills(skills,weapon);
+  if(!best||c.score>best.score)best={...c,skills,drift:{...add},slots,usedDrift:Object.values(add).reduce((a,b)=>a+b,0)};
+ }
+ return best;
+}
+
+function enumerate(req={}){
+ const weapon=currentWeapon(),lists=SLOT_ORDER.map(usable);
+ if(lists.some(x=>x.length===0))return [];
+ const out=[],parts=[];
+ function rec(i){
+  if(i===lists.length){const ev=evaluate(parts,weapon,req);if(ev)out.push({parts:[...parts],...ev});return}
+  for(const p of lists[i]){parts.push(p);rec(i+1);parts.pop()}
+ }
+ rec(0);return out;
+}
+
+function chipHtml(skills,drift={},req={}){
+ return Object.entries(skills).filter(([,v])=>v>0).sort((a,b)=>a[0].localeCompare(b[0],"ja")).map(([k,v])=>{
+  const cls=drift[k]?"drift":req[k]?"req":DB.skills[k]?.fire?"fire":"";
+  const d=drift[k]?` <span style="opacity:.75">(+${drift[k]})</span>`:"";
+  return `<span class="chip ${cls}">${esc(k)} Lv${v}${d}</span>`;
+ }).join("");
+}
+function resultHtml(r,i,req={}){
+ const eq=r.parts.map(p=>`${SLOT_JA[p.slot]}:${p.name}`).join(" / ");
+ return `<div class="result" data-i="${i}"><div class="rank">#${i+1}</div><div>
+ <div class="equip"><b>${esc(eq)}</b></div><div class="chips">${chipHtml(r.skills,r.drift,req)}</div>
+ <div class="result-actions"><button class="btn small cmp" data-i="${i}">比較+</button></div></div>
+ <div class="score">${r.score.toFixed(1)}<small>火力指数 / 漂移 ${r.usedDrift}/${r.slots}</small></div></div>`;
+}
+
+function runPower(){
+ $("powerResults").innerHTML=`<div class="empty">計算中…</div>`;
+ const all=enumerate({});all.sort((a,b)=>b.score-a.score);lastPower=all.slice(0,50);
+ $("powerResults").innerHTML=lastPower.length?lastPower.map((r,i)=>resultHtml(r,i)).join(""):`<div class="empty">候補がありません。除外装備や漂移指定を確認してください。</div>`;
+ $("stEvaluated").textContent=all.length.toLocaleString();$("stBest").textContent=lastPower[0]?lastPower[0].score.toFixed(1):"-";$("stDrift").textContent=lastPower[0]?lastPower[0].slots:"0";
+ bindResults("powerResults",lastPower);updateStats();
+}
+function runSkill(){
+ const all=enumerate(requirements),sort=$("skillSort").value,target=Object.values(requirements).reduce((a,b)=>a+b,0);
+ if(sort==="score")all.sort((a,b)=>b.score-a.score);
+ else if(sort==="slots")all.sort((a,b)=>(b.slots-b.usedDrift)-(a.slots-a.usedDrift)||b.score-a.score);
+ else all.sort((a,b)=>{
+  const ea=Object.values(a.skills).reduce((x,y)=>x+y,0)-target,eb=Object.values(b.skills).reduce((x,y)=>x+y,0)-target;
+  return ea-eb||b.score-a.score;
+ });
+ lastSkill=all.slice(0,50);$("skillCount").textContent=`${all.length}件`;
+ $("skillResults").innerHTML=lastSkill.length?lastSkill.map((r,i)=>resultHtml(r,i,requirements)).join(""):`<div class="empty">条件を満たす構成がありません。</div>`;
+ bindResults("skillResults",lastSkill);
+}
+function bindResults(container,arr){
+ document.querySelectorAll(`#${container} .result`).forEach(el=>el.addEventListener("click",e=>{
+  const i=+el.dataset.i;if(e.target.classList.contains("cmp")){e.stopPropagation();addCompare(arr[i]);return}openDetail(arr[i]);
+ }));
+}
+
+function openDetail(r){
+ const w=currentWeapon();$("modalTitle").textContent=`構成詳細 / ${r.score.toFixed(1)}`;
+ const slots=r.parts.map(p=>`<div class="slot"><div class="slot-label">${SLOT_JA[p.slot]}</div><div><b>${esc(p.name)}</b> <span class="badge">漂移${p.drift}</span>
+ <div class="chips">${chipHtml(p.skills)}</div><div class="note">${esc(p.monster)} / ${esc(p.grade)} ${p.source?`/ <a class="source-link" href="${esc(p.source)}" target="_blank" rel="noopener">公式</a>`:""}</div></div>
+ <button class="btn small danger excludeOne" data-id="${p.id}">除外</button></div>`).join("");
+ const bd=r.breakdown.map(([a,b])=>`<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join("");
+ const mat=r.parts.map(p=>`<div class="material-item"><div><b>${esc(p.name)}</b><div class="note">関連: ${esc(p.monster)}${p.monsterSource?` / <a class="source-link" href="${esc(p.monsterSource)}" target="_blank" rel="noopener">入手素材を公式確認</a>`:""}</div></div><div>${p.materials?.length?`${p.materials.length}項目`:"数量未登録"}</div></div>`).join("");
+ $("modalBody").innerHTML=`<div class="stats"><div class="stat"><b>${r.score.toFixed(1)}</b><span>火力指数</span></div><div class="stat"><b>${r.rawExpected.toFixed(1)}</b><span>物理期待値</span></div>
+ <div class="stat"><b>${r.elemExpected.toFixed(1)}</b><span>属性寄与</span></div><div class="stat"><b>${r.affinity.toFixed(1)}%</b><span>実効会心</span></div><div class="stat"><b>${r.usedDrift}/${r.slots}</b><span>漂移使用/枠</span></div></div>
+ <div class="detail-grid"><div>
+  <div class="card"><div class="hd">装備構成</div><div class="bd"><div class="slot"><div class="slot-label">武器</div><div><b>${esc(w.name)}</b>
+   <div class="note">${esc(w.type)} / 攻撃 ${w.attack} / ${esc(w.element)} ${w.elementValue} / 会心 ${w.affinity}% ${w.source?`/ <a class="source-link" href="${esc(w.source)}" target="_blank" rel="noopener">公式</a>`:""}</div>
+   <div class="chips">${chipHtml(w.skills||{})}</div></div><span></span></div>${slots}
+   <div class="row" style="margin-top:10px"><button id="saveDetail" class="btn primary">マイセット登録</button><button id="compareDetail" class="btn">比較に追加</button></div>
+  </div></div>
+  <div class="card" style="margin-top:10px"><div class="hd">発動スキル</div><div class="bd"><div class="chips">${chipHtml(r.skills,r.drift)}</div></div></div>
+ </div><div>
+  <div class="card"><div class="hd">計算内訳</div><div class="bd"><table class="table">${bd}</table></div></div>
+  <div class="card" style="margin-top:10px"><div class="hd">素材・入手先</div><div class="bd">${mat}</div></div>
+ </div></div>`;
+ $("modal").classList.add("open");
+ document.querySelectorAll(".excludeOne").forEach(b=>b.onclick=()=>{excluded.add(b.dataset.id);persist();$("modal").classList.remove("open");renderArmorCatalog();updateStats()});
+ $("saveDetail").onclick=()=>saveSet(r,w);$("compareDetail").onclick=()=>addCompare(r);
+}
+function saveSet(r,w){
+ const name=prompt("マイセット名",`${w.name} / ${new Date().toLocaleDateString("ja-JP")}`);if(!name)return;
+ mysets.unshift({id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())),name,weapon:{...w},parts:JSON.parse(JSON.stringify(r.parts)),skills:{...r.skills},drift:{...r.drift},score:r.score,rawExpected:r.rawExpected,elemExpected:r.elemExpected,affinity:r.affinity,slots:r.slots,created:new Date().toISOString()});
+ persist();renderMysets();renderMaterialSetOptions();updateStats();alert("マイセットに登録しました。");
+}
+function addCompare(r){
+ const sig=r.parts.map(p=>p.id).join("|")+"#"+JSON.stringify(r.drift);if(compareList.some(x=>x.sig===sig))return;
+ if(compareList.length>=3)compareList.shift();
+ compareList.push({sig,r:JSON.parse(JSON.stringify(r)),weapon:{...currentWeapon()}});renderCompare();alert("比較に追加しました。");
+}
+function renderCompare(){
+ $("compareGrid").innerHTML=compareList.length?compareList.map((x,i)=>`<div class="card set"><h3>構成 ${i+1}</h3><div class="meta">${esc(x.weapon.name)} / 火力 ${x.r.score.toFixed(1)}</div>
+ ${x.r.parts.map(p=>`<span class="pill">${SLOT_JA[p.slot]} ${esc(p.name)}</span>`).join("")}<div class="chips">${chipHtml(x.r.skills,x.r.drift)}</div>
+ <button class="btn small danger delCmp" data-i="${i}" style="margin-top:8px">外す</button></div>`).join(""):`<div class="empty">ランキングまたは詳細画面から「比較+」で追加してください。</div>`;
+ document.querySelectorAll(".delCmp").forEach(b=>b.onclick=()=>{compareList.splice(+b.dataset.i,1);renderCompare()});
+ if(compareList.length<2){$("compareTableWrap").innerHTML="";return}
+ const metrics=[["火力指数",x=>x.r.score.toFixed(1)],["物理期待値",x=>x.r.rawExpected.toFixed(1)],["属性寄与",x=>x.r.elemExpected.toFixed(1)],["実効会心",x=>x.r.affinity.toFixed(1)+"%"],["漂移",x=>`${x.r.usedDrift}/${x.r.slots}`]];
+ $("compareTableWrap").innerHTML=`<div class="card"><div class="hd">数値比較</div><div class="bd"><table class="table"><tr><th>項目</th>${compareList.map((_,i)=>`<th>構成${i+1}</th>`).join("")}</tr>
+ ${metrics.map(([n,f])=>`<tr><td>${n}</td>${compareList.map(x=>`<td>${f(x)}</td>`).join("")}</tr>`).join("")}</table></div></div>`;
+}
+
+function renderMysets(){
+ $("mysetsGrid").innerHTML=mysets.length?mysets.map((s,i)=>`<div class="card set"><h3>${esc(s.name)}</h3><div class="meta">${esc(s.weapon.name)} / 火力 ${Number(s.score).toFixed(1)} / ${new Date(s.created).toLocaleDateString("ja-JP")}</div>
+ <div>${s.parts.map(p=>`<span class="pill">${SLOT_JA[p.slot]} ${esc(p.name)}</span>`).join("")}</div><div class="chips">${chipHtml(s.skills,s.drift)}</div>
+ <div class="row" style="margin-top:9px"><button class="btn small loadSet" data-i="${i}">武器条件を読込</button><button class="btn small matSet" data-id="${s.id}">素材</button><button class="btn small danger delSet" data-i="${i}">削除</button></div></div>`).join(""):`<div class="empty">まだマイセットはありません。</div>`;
+ document.querySelectorAll(".delSet").forEach(b=>b.onclick=()=>{mysets.splice(+b.dataset.i,1);persist();renderMysets();renderMaterialSetOptions();updateStats()});
+ document.querySelectorAll(".loadSet").forEach(b=>b.onclick=()=>loadSetWeapon(mysets[+b.dataset.i]));
+ document.querySelectorAll(".matSet").forEach(b=>b.onclick=()=>{currentMaterialSetId=b.dataset.id;showTab("materials");renderMaterialSetOptions();$("materialSet").value=currentMaterialSetId;calcMaterial()});
+}
+function loadSetWeapon(s){
+ let id=DB.weapons.find(w=>w.id===s.weapon.id)?.id||"custom";$("weaponSelect").value=id;setWeapon(s.weapon);showTab("power");
+}
+function renderMaterialSetOptions(){
+ $("materialSet").innerHTML=mysets.length?mysets.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join(""):`<option value="">マイセットなし</option>`;
+ if(currentMaterialSetId&&mysets.some(s=>s.id===currentMaterialSetId))$("materialSet").value=currentMaterialSetId;
+}
+function calcMaterial(){
+ const s=mysets.find(x=>x.id===$("materialSet").value);if(!s){$("materialResults").innerHTML=`<div class="empty">マイセットがありません。</div>`;return}
+ const exact=new Map(),unknown=[];
+ for(const p of s.parts){
+  if(Array.isArray(p.materials)&&p.materials.length){
+   for(const m of p.materials){const key=m.name;const cur=exact.get(key)||{name:key,qty:0,source:m.source||p.monster,rarity:m.rarity||""};cur.qty+=(+m.qty||0);exact.set(key,cur)}
+  }else unknown.push(p);
+ }
+ const byMonster={};for(const p of unknown)(byMonster[p.monster]??=[]).push(p);
+ let h="";
+ if(exact.size){h+=`<div class="material-group"><h3>必要個数登録済み</h3>${[...exact.values()].map(m=>`<div class="material-item"><div><b>${esc(m.name)}</b><div class="note">${esc(m.source)}</div></div><div>×${m.qty}</div></div>`).join("")}</div>`}
+ h+=`<div class="material-group"><h3>数量未登録の装備</h3>`;
+ h+=Object.keys(byMonster).length?Object.entries(byMonster).map(([mon,parts])=>{
+  const catalog=DB.materialsCatalog?.[mon]||[],src=parts.find(p=>p.monsterSource)?.monsterSource||"";
+  return `<div class="card" style="margin-bottom:8px"><div class="hd"><span>${esc(mon)}</span>${src?`<a class="source-link" href="${esc(src)}" target="_blank" rel="noopener">公式素材一覧</a>`:""}</div><div class="bd">
+  <div class="note">対象装備: ${parts.map(p=>esc(p.name)).join(" / ")}</div>${catalog.length?`<div class="chips">${catalog.map(m=>`<span class="chip">${esc(m.name)} R${m.rarity}</span>`).join("")}</div>`:`<div class="note" style="margin-top:6px">素材カタログ未登録。装備詳細/ゲーム内で必要数を確認してください。</div>`}
+  </div></div>`}).join(""):`<div class="ok">全装備の必要個数がマスター登録済みです。</div>`;
+ h+="</div>";$("materialResults").innerHTML=h;
+}
+
+function renderArmorCatalog(){
+ const q=$("armorSearch").value.trim().toLowerCase(),slot=$("armorSlotFilter").value;
+ const arr=DB.armors.filter(a=>(!slot||a.slot===slot)&&(!q||(a.name+a.monster).toLowerCase().includes(q)));
+ $("armorCatalog").innerHTML=arr.map(a=>`<div class="ex"><div><b>${esc(a.name)}</b><div class="note">${SLOT_JA[a.slot]} / ${esc(a.monster)} / 漂移${a.drift}</div></div>
+ <button class="btn small ${excluded.has(a.id)?"good":"danger"} toggleEx" data-id="${a.id}">${excluded.has(a.id)?"解除":"除外"}</button></div>`).join("")||`<div class="empty">該当なし</div>`;
+ document.querySelectorAll(".toggleEx").forEach(b=>b.onclick=()=>{excluded.has(b.dataset.id)?excluded.delete(b.dataset.id):excluded.add(b.dataset.id);persist();renderArmorCatalog();updateStats();updateComboBadge()});
+}
+function renderReq(){
+ $("reqList").innerHTML=Object.entries(requirements).map(([k,v])=>`<div class="req">${esc(k)} Lv${v}<button data-k="${esc(k)}">×</button></div>`).join("");
+ document.querySelectorAll("#reqList button").forEach(b=>b.onclick=()=>{delete requirements[b.dataset.k];renderReq()});
+}
+function renderManualDrift(){
+ $("manualDriftList").innerHTML=Object.entries(manualDrift).map(([k,v])=>`<div class="req">${esc(k)} +${v}<button data-k="${esc(k)}">×</button></div>`).join("");
+ document.querySelectorAll("#manualDriftList button").forEach(b=>b.onclick=()=>{delete manualDrift[b.dataset.k];renderManualDrift()});
+}
+function updateComboBadge(){const n=SLOT_ORDER.map(s=>usable(s).length).reduce((a,b)=>a*b,1);$("comboBadge").textContent=n.toLocaleString()+"構成"}
+function updateStats(){$("stExcluded").textContent=excluded.size;$("stSaved").textContent=mysets.length;updateComboBadge()}
+function persist(){
+ writeStoredJson(STORAGE.ex,[...excluded]);writeStoredJson(STORAGE.sets,mysets);writeStoredJson(STORAGE.state,{requirements,manualDrift});
+ updatePwaStatus();
+}
+
+function setupSelectors(){
+ $("elementSelect").innerHTML=DB.elements.map(x=>`<option>${esc(x)}</option>`).join("");
+ $("weaponSelect").innerHTML=DB.weapons.map(w=>`<option value="${w.id}">${esc(w.type)}｜${esc(w.name)} (${esc(w.grade)})</option>`).join("");
+ const skills=Object.keys(DB.skills).sort((a,b)=>a.localeCompare(b,"ja"));
+ $("skillPicker").innerHTML=skills.map(k=>`<option>${esc(k)}</option>`).join("");
+ $("manualDriftSkill").innerHTML=skills.filter(k=>DB.skills[k]?.fire).map(k=>`<option>${esc(k)}</option>`).join("");
+ const driftBase=[["見切り","見切り"],["弱点特効","弱点特効"],["超会心","超会心"],["__ELEMENT__","武器属性強化"],["連撃","連撃"],["攻撃","攻撃"]];
+ $("driftPool").innerHTML=driftBase.map(([v,t],i)=>`<label class="check"><input type="checkbox" value="${v}" ${i<5?"checked":""}>${t}</label>`).join("");
+ $("dataVersion").textContent=DB.version||"custom";
+}
+function setupUptimes(){
+ $("uptimeSliders").innerHTML=UPTIMES.map(u=>`<div class="field"><div class="slider-head"><span>${u.label}</span><span id="lbl_${u.id}">${u.value}%</span></div><input id="up_${u.id}" type="range" min="0" max="100" value="${u.value}"></div>`).join("");
+ for(const u of UPTIMES)$("up_"+u.id).oninput=e=>$("lbl_"+u.id).textContent=e.target.value+"%";
+}
+function showTab(name){
+ document.querySelectorAll(".tab,.bottom-tab").forEach(t=>t.classList.toggle("active",t.dataset.tab===name));document.querySelectorAll(".pane").forEach(p=>p.classList.add("hide"));$("pane-"+name).classList.remove("hide");
+ if(name==="mysets")renderMysets();if(name==="compare")renderCompare();if(name==="materials")renderMaterialSetOptions();if(name==="data")renderArmorCatalog();
+ if(window.innerWidth<=760)window.scrollTo({top:0,behavior:"auto"});
+}
+async function exportBackup(){
+ const data={app:"MH Now Build Lab",version:"0.3",exportedAt:new Date().toISOString(),excluded:[...excluded],mysets,requirements,manualDrift};
+ const text=JSON.stringify(data,null,2),stamp=new Date().toISOString().slice(0,10),name=`MHNow_Build_Lab_backup_${stamp}.json`;
+ let file=null;try{file=new File([text],name,{type:"application/json"})}catch(_e){}
+ try{
+  if(file && navigator.share && navigator.canShare && navigator.canShare({files:[file]})){await navigator.share({title:"MH Now Build Lab バックアップ",files:[file]});return}
+ }catch(e){if(e && e.name==="AbortError")return}
+ const blob=new Blob([text],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+async function importBackup(file){
+ const o=JSON.parse(await file.text());if(Array.isArray(o.excluded))excluded=new Set(o.excluded);if(Array.isArray(o.mysets))mysets=o.mysets;if(o.requirements)requirements=o.requirements;if(o.manualDrift)manualDrift=o.manualDrift;
+ persist();renderReq();renderManualDrift();renderMysets();renderArmorCatalog();updateStats();
+}
+function validateMaster(o){
+ if(!o||!Array.isArray(o.weapons)||!Array.isArray(o.armors)||!o.skills)throw new Error("weapons / armors / skills が必要です");
+ for(const a of o.armors)if(!a.id||!SLOT_ORDER.includes(a.slot)||!a.name)throw new Error("armor の id / slot / name を確認してください");
+ return true;
+}
+async function loadMaster(file){
+ const o=JSON.parse(await file.text());validateMaster(o);DB=o;if(!DB.elements)DB.elements=BUILTIN.elements;if(!DB.materialsCatalog)DB.materialsCatalog={};distroCache.clear();setupSelectors();
+ $("weaponSelect").value=DB.weapons[0].id;setWeapon(DB.weapons[0]);renderArmorCatalog();updateStats();alert("外部データマスターを読み込みました。");
+}
+function resetMaster(){DB=JSON.parse(JSON.stringify(BUILTIN));distroCache.clear();setupSelectors();$("weaponSelect").value="astalos_gs_g10";setWeapon(DB.weapons.find(w=>w.id==="astalos_gs_g10"));renderArmorCatalog();updateStats()}
+
+
+let deferredInstallPrompt=null;
+function isIos(){return /iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1)}
+function isStandalone(){return window.matchMedia?.("(display-mode: standalone)").matches===true||navigator.standalone===true}
+function updateNetwork(){const online=navigator.onLine!==false,b=$("networkBadge");if(!b)return;b.textContent=online?"オンライン":"オフライン";b.classList.toggle("online",online);b.classList.toggle("offline",!online)}
+function updatePwaStatus(){
+ if($("pwaMode"))$("pwaMode").textContent=isStandalone()?"ホーム画面アプリ":"Safari / ブラウザ";
+ if($("storageStatus"))$("storageStatus").textContent=storageUsable?"localStorage 利用可":"端末保存を利用できません";
+ if($("swStatus")){
+  if(location.protocol!=="https:" && location.hostname!=="localhost")$("swStatus").textContent="HTTPS配信が必要";
+  else $("swStatus").textContent=navigator.serviceWorker?.controller?"有効":"初回登録/更新待ち";
+ }
+ document.querySelectorAll(".pwa-browser-only").forEach(e=>e.classList.toggle("hide",isStandalone()));
+}
+function openInstallHelp(){
+ if(isStandalone())return alert("すでにホーム画面アプリとして起動しています。");
+ if(deferredInstallPrompt){deferredInstallPrompt.prompt();deferredInstallPrompt.userChoice.finally(()=>{deferredInstallPrompt=null;updatePwaStatus()});return}
+ $("installIosHelp").classList.toggle("hide",!isIos());$("installGenericHelp").classList.toggle("hide",isIos());$("installModal").classList.add("open");
+}
+async function registerPwa(){
+ updateNetwork();updatePwaStatus();
+ if(!("serviceWorker" in navigator)){$("swStatus")&&($("swStatus").textContent="非対応");return}
+ if(location.protocol!=="https:" && location.hostname!=="localhost"){updatePwaStatus();return}
+ try{const reg=await navigator.serviceWorker.register("./service-worker.js",{scope:"./"});await navigator.serviceWorker.ready;updatePwaStatus();return reg}catch(e){if($("swStatus"))$("swStatus").textContent="登録失敗"}
+}
+async function refreshPwaCache(){
+ if(!("serviceWorker" in navigator))return alert("Service Worker非対応です。");
+ try{const reg=await navigator.serviceWorker.getRegistration();if(!reg)return alert("まだPWAキャッシュが登録されていません。");await reg.update();if(reg.waiting){reg.waiting.postMessage({type:"SKIP_WAITING"})}alert("キャッシュ更新を確認しました。次回起動から最新版を使用します。") }catch(e){alert("キャッシュ更新に失敗しました: "+e.message)}
+}
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstallPrompt=e;updatePwaStatus()});
+window.addEventListener("appinstalled",()=>{deferredInstallPrompt=null;updatePwaStatus()});
+window.addEventListener("online",updateNetwork);window.addEventListener("offline",updateNetwork);
+
+function init(){
+ setupUptimes();setupSelectors();
+ const saved=readStoredJson(STORAGE.state,{});requirements=saved.requirements||{};manualDrift=saved.manualDrift||{};
+ $("weaponSelect").value="astalos_gs_g10";setWeapon(DB.weapons.find(w=>w.id==="astalos_gs_g10"));
+ $("weaponSelect").onchange=()=>setWeapon(DB.weapons.find(w=>w.id===$("weaponSelect").value)||DB.weapons[0]);
+ $("powerSearch").onclick=runPower;$("skillSearch").onclick=runSkill;
+ $("addSkill").onclick=()=>{const k=$("skillPicker").value;requirements[k]=clamp(+$("skillLevel").value||1,1,maxLv(k));renderReq();persist()};
+ $("addManualDrift").onclick=()=>{const k=$("manualDriftSkill").value;manualDrift[k]=clamp(+$("manualDriftLevel").value||1,1,maxLv(k));renderManualDrift();persist()};
+ $("driftMode").onchange=()=>{$("autoDriftBox").classList.toggle("hide",$("driftMode").value!=="auto");$("manualDriftBox").classList.toggle("hide",$("driftMode").value!=="manual")};
+ document.querySelectorAll(".tab,.bottom-tab").forEach(t=>t.onclick=()=>showTab(t.dataset.tab));
+ $("modalClose").onclick=()=>$("modal").classList.remove("open");$("modal").onclick=e=>{if(e.target===$("modal"))$("modal").classList.remove("open")};
+ $("clearCompare").onclick=()=>{compareList=[];renderCompare()};
+ $("clearSets").onclick=()=>{if(confirm("マイセットを全削除しますか？")){mysets=[];persist();renderMysets();renderMaterialSetOptions();updateStats()}};
+ $("clearExcluded").onclick=()=>{excluded.clear();persist();renderArmorCatalog();updateStats()};
+ $("armorSearch").oninput=renderArmorCatalog;$("armorSlotFilter").onchange=renderArmorCatalog;
+ $("calcMaterials").onclick=calcMaterial;$("materialSet").onchange=e=>currentMaterialSetId=e.target.value;
+ $("exportBtn").onclick=exportBackup;$("importBtn").onclick=()=>$("importFile").click();$("installBtn").onclick=openInstallHelp;$("installBtn2").onclick=openInstallHelp;$("installClose").onclick=()=>$("installModal").classList.remove("open");$("installModal").onclick=e=>{if(e.target===$("installModal"))$("installModal").classList.remove("open")};$("refreshCache").onclick=refreshPwaCache;$("importFile").onchange=async e=>{if(e.target.files[0])try{await importBackup(e.target.files[0])}catch(err){alert("読込失敗: "+err.message)}e.target.value=""};
+ $("masterFile").onchange=async e=>{if(e.target.files[0])try{await loadMaster(e.target.files[0])}catch(err){alert("マスター読込失敗: "+err.message)}e.target.value=""};
+ $("resetMaster").onclick=resetMaster;
+ renderReq();renderManualDrift();renderMysets();renderMaterialSetOptions();renderArmorCatalog();updateStats();runPower();registerPwa();
+}
+init();
+</script>
+</body>
+</html>
