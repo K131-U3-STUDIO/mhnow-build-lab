@@ -1,0 +1,30 @@
+{
+  "results": [
+    {
+      "name": "B01 actual UI malformed nested import is atomic",
+      "ms": 301,
+      "status": "PASS"
+    },
+    {
+      "name": "B02 actual Worker results retain start conditions while UI changes",
+      "ms": 4995,
+      "status": "PASS"
+    },
+    {
+      "name": "B03 quota failure visible; pending set exports then retries",
+      "ms": 213,
+      "status": "PASS"
+    },
+    {
+      "name": "B01 corrupt startup recovery keeps bytes and exports original",
+      "ms": 181,
+      "status": "PASS"
+    },
+    {
+      "name": "B01 valid restore recovers UI and quarantines corrupt original",
+      "ms": 112,
+      "status": "PASS"
+    }
+  ],
+  "errors": []
+}
