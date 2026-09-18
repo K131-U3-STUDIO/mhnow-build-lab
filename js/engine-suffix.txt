@@ -1,0 +1,6 @@
+
+function configure(input){
+ DB=input.db;ownedDrift=input.ownedDrift||{};manualDrift=input.manualDrift||{};armorSettings=input.armorSettings||{};excluded=new Set(input.excluded||[]);config=input.config;theoryCandidateCache=null;
+ armorSlotCache=Object.fromEntries(SLOT_ORDER.map(slot=>[slot,DB.armors.filter(a=>a.slot===slot)]));
+}
+globalThis.MHNEngine={configure,enumerate:enumerateLocal,evaluate,sumSkills,calcFromSkills,optimizeDrift,aggregateDrift,availableDriftSlots,comboOptions};
