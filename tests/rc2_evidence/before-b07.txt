@@ -1,0 +1,11 @@
+{
+  "id": "B07",
+  "status": "ISSUE_REPRODUCED",
+  "scenario": "synthetic official display-name change, officialId unchanged",
+  "officialId": "TEST_HEAD",
+  "resultIds": [
+    "official_armor_TEST_HEAD",
+    "keep-me"
+  ],
+  "oldOwnedArmorId": "keep-me"
+}

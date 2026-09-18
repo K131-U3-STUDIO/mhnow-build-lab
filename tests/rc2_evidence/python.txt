@@ -1,0 +1,27 @@
+test_discovery_routes (test_pipeline.Pipeline.test_discovery_routes) ... ok
+test_drift_coverage (test_pipeline.Pipeline.test_drift_coverage) ... ok
+test_duplicate_ids (test_pipeline.Pipeline.test_duplicate_ids) ... ok
+test_equipment_misclassification (test_pipeline.Pipeline.test_equipment_misclassification) ... ok
+test_failed_publish_preserves_bytes (test_pipeline.Pipeline.test_failed_publish_preserves_bytes) ... ok
+test_full_coverage (test_pipeline.Pipeline.test_full_coverage) ... ok
+test_no_invented_material_quantities (test_pipeline.Pipeline.test_no_invented_material_quantities) ... ok
+test_official_effect_values (test_pipeline.Pipeline.test_official_effect_values) ... ok
+test_official_payload_requires_structure (test_pipeline.Pipeline.test_official_payload_requires_structure) ... ok
+test_official_structured_parser_fixture (test_pipeline.Pipeline.test_official_structured_parser_fixture) ... ok
+test_relative_coverage (test_pipeline.Pipeline.test_relative_coverage) ... ok
+test_rowspan (test_pipeline.Pipeline.test_rowspan) ... ok
+test_slot_shape (test_pipeline.Pipeline.test_slot_shape) ... ok
+test_weapon_skill_unlocks (test_pipeline.Pipeline.test_weapon_skill_unlocks) ... ok
+test_b06_workflow_explicit_deploy_gate (test_rc2.RC2.test_b06_workflow_explicit_deploy_gate) ... ok
+test_b07_ambiguous_legacy_match_fails_closed (test_rc2.RC2.test_b07_ambiguous_legacy_match_fails_closed) ... ok
+test_b07_duplicate_official_id_rejected (test_rc2.RC2.test_b07_duplicate_official_id_rejected) ... ok
+test_b07_legacy_name_auxiliary (test_rc2.RC2.test_b07_legacy_name_auxiliary) ... ok
+test_b07_normalized_official_source (test_rc2.RC2.test_b07_normalized_official_source) ... ok
+test_b07_ownership_reference_id_stays_stable (test_rc2.RC2.test_b07_ownership_reference_id_stays_stable) ... ok
+test_b07_rename_translation_keeps_id (test_rc2.RC2.test_b07_rename_translation_keeps_id) ... ok
+test_b07_truly_distinct_armor_not_merged (test_rc2.RC2.test_b07_truly_distinct_armor_not_merged) ... ok
+
+----------------------------------------------------------------------
+Ran 22 tests in 0.228s
+
+OK

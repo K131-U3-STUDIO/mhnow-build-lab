@@ -1,0 +1,23 @@
+PASS weapon skill exactly once
+PASS no drift ignores owned
+PASS negative affinity has 0.75 penalty
+PASS positive affinity clamp
+PASS status element not added as raw damage
+PASS skill caps across all sources
+PASS unimplemented skill does not invent score
+PASS locked grade slot not usable
+PASS unknown unlock does not assume G8
+PASS owned tied to armor
+PASS same result ID cannot be equipped twice
+PASS distinct results with same skill can fill two slots
+PASS drift attack bonus once
+PASS requested owned skill missing from eligible master allowed
+PASS theoretical drift includes weapon skills
+PASS manual assigned to actual armor slots
+PASS force Lv5 verified penalty 30%
+PASS elemental critical applies to elemental contribution
+PASS critical element scales base weapon element only
+PASS conditional affinity clamp before averaging
+PASS requested skill search + weapon snapshot
+PASS exclusion
+{"passed":22}

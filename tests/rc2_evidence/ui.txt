@@ -1,0 +1,3 @@
+PASS startup / 721 weapons / 366 armors 218
+PASS bounded weapon list + 14 type filter + attribute + source search 315
+PASS skill checkbox / partial filter / level / selected only / clear 551

@@ -1,0 +1,6 @@
+PASS B01 actual UI malformed nested import is atomic 319
+PASS B02 actual Worker results retain start conditions while UI changes 5146
+PASS B03 quota failure visible; pending set exports then retries 232
+PASS B01 corrupt startup recovery keeps bytes and exports original 180
+PASS B01 valid restore recovers UI and quarantines corrupt original 114
+[{"name":"B01 actual UI malformed nested import is atomic","ms":319,"status":"PASS"},{"name":"B02 actual Worker results retain start conditions while UI changes","ms":5146,"status":"PASS"},{"name":"B03 quota failure visible; pending set exports then retries","ms":232,"status":"PASS"},{"name":"B01 corrupt startup recovery keeps bytes and exports original","ms":180,"status":"PASS"},{"name":"B01 valid restore recovers UI and quarantines corrupt original","ms":114,"status":"PASS"}]

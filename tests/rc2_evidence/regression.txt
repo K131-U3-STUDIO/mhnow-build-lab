@@ -1,0 +1,12 @@
+PASS B01 nested invalid imports preserve exact bytes and memory
+PASS B01 dangerous keys, excessive depth, nonfinite and duplicate drift rejected
+PASS B01 legacy migration and unknown references preserved
+PASS B01 corrupt startup locks writes without deleting original
+PASS B01 valid recovery quarantines original bytes
+PASS B02 deep immutable snapshot across every mutable search input
+PASS B02 cancelled worker late responses cannot finish newer search
+PASS B03 quota failure has no success alert, retry retains pending set
+PASS B03 all changes share unsaved policy; compatibility keys remain read-only
+PASS B04 powerhouse official 10/15/25%; no duplicate elemental/affinity/bonus
+PASS B04 daring suppresses impossible dodge buff at every level and uptime
+{"passed":11,"environment":"Node VM functions / simulated Worker and storage; not UI"}

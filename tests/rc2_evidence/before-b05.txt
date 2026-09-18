@@ -1,0 +1,9 @@
+{
+  "id": "B05",
+  "status": "ISSUE_REPRODUCED",
+  "mode": "original SW handler, in-memory network/cache adapters",
+  "scenario": "new server version, installed RC1 worker still controls client",
+  "html": "index RC2",
+  "js": "app RC1",
+  "mixedVersions": true
+}

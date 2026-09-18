@@ -1,0 +1,4 @@
+B01 {"validation":"accepted parts:[null]","importError":"Cannot read properties of null (reading 'slot')","previousSavedSnapshotOverwritten":true,"corruptSnapshotPassesNextStartupValidation":true}
+B02 {"workerRequestedAttack":1,"savedRequestedAttack":5,"workerArmorGrade":10,"savedArmorGrade":4}
+B03 {"saveBlocked":true,"successAlert":"マイセットに登録しました。","snapshotWritten":false}
+B04 {"noSkillScore":1000,"powerhouseLv3Score":1000,"recklessPlusDodgeBuffScore":1350,"note":"Unmodeled skills are labeled in UI, but modeled dependency conflicts are not blocked."}

@@ -1,0 +1,23 @@
+{
+  "date": "2026-09-18",
+  "python": "3.12.14",
+  "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
+  "node": "v24.19.0",
+  "playwright": "1.62.1",
+  "viewport": [
+    {
+      "width": 820,
+      "height": 1180,
+      "hasTouch": true
+    },
+    {
+      "width": 390,
+      "height": 1180
+    }
+  ],
+  "browser": "Chromium 153.0.8010.0 headless / /tmp/mhn-chromium",
+  "testOrigin": "ephemeral localhost port, /lab/ relative deployment",
+  "realIPad": false,
+  "webKit": false,
+  "githubActionsExecuted": false
+}

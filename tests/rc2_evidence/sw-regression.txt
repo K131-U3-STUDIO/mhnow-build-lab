@@ -1,0 +1,9 @@
+PASS B05 content hashes and Worker chain match manifest
+PASS B05 verified install waits for explicit activation
+PASS B05 offline navigation and complete release assets
+PASS B05 failed install and connection loss retain existing cache
+PASS B05 incompatible network master retains compatible cached bytes
+PASS B05 original RC1 controller uses complete hashed RC2 dependency chain
+PASS B05 whole-release switch retains assets for older clients
+PASS B05 unrelated caches and local data never deleted
+{"passed":8,"environment":"SW handler VM / memory Cache API, not iOS lifecycle"}
