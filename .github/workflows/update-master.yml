@@ -1,39 +1,77 @@
-name: Update MHN master data
-
+name: Generate, validate and publish MHN master
 on:
   workflow_dispatch:
   schedule:
     - cron: '17 18 * * *'
-
 permissions:
-  contents: write
-
+  contents: read
+concurrency:
+  group: pages-main
+  cancel-in-progress: false
 jobs:
-  update:
+  prepare:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
-
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
-      - name: Install scraper dependencies
-        run: pip install requests beautifulsoup4
-
-      - name: Build master JSON
-        run: python tools/build_master.py --output data/mhn_master.json
-
-      - name: Commit updated master
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Dependencies
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/mhn_master.json
-          if git diff --cached --quiet; then
-            echo "No data changes."
-          else
-            git commit -m "chore: update MHN master data"
+          pip install requests beautifulsoup4
+          npm install --no-save --package-lock=false playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Generate master (coverage guard / atomic replace)
+        run: python tools/build_master.py --output data/mhn_master.json
+      - name: Build coherent release
+        run: |
+          python tools/build_engine.py
+          python tools/build_model_coverage.py
+          python tools/build_release.py
+      - name: Validate the exact artifact
+        run: |
+          python -m unittest discover -s tests -p 'test_*.py' -v
+          node tests/engine.test.cjs
+          node tests/rc2.test.cjs
+          node tests/sw-release.test.cjs
+          node tests/ui.test.cjs
+          node tests/rc2-ui.test.cjs
+      - name: Commit generated source (does not trigger Pages)
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add DAMAGE_MODEL.md data/mhn_master.json js/engine.js index.html assets service-worker.js release-manifest.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'chore: refresh validated master and release shell'
             git push
           fi
+      - name: Stage only runtime files
+        run: |
+          mkdir _site
+          cp index.html service-worker.js manifest.webmanifest release-manifest.json _site/
+          cp -r assets data icons _site/
+          touch _site/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+  deploy:
+    needs: prepare
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish the validated artifact
+        id: deployment
+        uses: actions/deploy-pages@v4
