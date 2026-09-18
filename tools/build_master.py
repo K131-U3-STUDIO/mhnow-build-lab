@@ -7,10 +7,11 @@ from __future__ import annotations
 import argparse, concurrent.futures, datetime as dt, json, re, sys, time, unicodedata
 from pathlib import Path
 from urllib.parse import urljoin, urlparse, unquote
+from data_validation import atomic_publish
 import requests
 from bs4 import BeautifulSoup
 
-UA="MHNow-Build-Lab/0.4 (+personal noncommercial data refresh; GitHub Pages)"
+UA="MHNow-Build-Lab/0.5 (+personal noncommercial data refresh; GitHub Pages)"
 HEADERS={"User-Agent":UA,"Accept-Language":"ja-JP,ja;q=0.9,en;q=0.5"}
 SKILL_INDEX="https://mhnow.wiki-db.com/skills/"
 ARMOR_INDEX="https://mhnow.wiki-db.com/armors/"
@@ -31,7 +32,14 @@ def norm(s:str)->str:
  s=re.sub(r"\s+"," ",s).strip()
  return ALIASES.get(s,s)
 def get(url,timeout=30):
- r=requests.get(url,headers=HEADERS,timeout=timeout);r.raise_for_status();return r.text
+ last=None
+ for attempt in range(3):
+  try:
+   r=requests.get(url,headers=HEADERS,timeout=timeout);r.raise_for_status();return r.text
+  except requests.RequestException as e:
+   last=e
+   if attempt<2:time.sleep(.5*(attempt+1))
+ raise last
 
 def cat(n):
  if any(x in n for x in ["属性攻撃強化","会心撃【属性】","ハイチャージ","属性攻撃増強","鋼龍の凍風","幻獣の疾雷","溟龍の波雷","霞龍の毒霧","冰龍の冰纏","爆破属性強化","毒属性強化","麻痺属性強化","睡眠属性強化"]):return "element"
@@ -52,10 +60,17 @@ def fetch_skills():
   try:
    sp=BeautifulSoup(get(url),"html.parser");name=norm(sp.find("h1").get_text(" ",strip=True) if sp.find("h1") else fallback);txt=sp.get_text("\n",strip=True)
    levels=[int(x) for x in re.findall(r"(?:^|\n)\+(\d+)\s*-",txt)];mx=max(levels) if levels else 5
-   drift=False
-   if "## 漂流石" in txt or "漂流石" in txt:
-    after=txt.split("漂流石",1)[-1];drift=not any(x in after[:120] for x in ["Please enable","コンテンツ"])
-   out[name]={"max":mx,"category":cat(name),"fire":1 if any(x in name for x in FIRE_WORDS) else 0,"drift":drift,"source":url}
+   drift_stones=[]
+   for h in sp.find_all(["h2","h3"]):
+    if "漂流石" not in norm(h.get_text(" ",strip=True)):continue
+    for sib in h.find_next_siblings():
+     if getattr(sib,"name",None) in ["h1","h2"]:break
+     if getattr(sib,"name",None) in ["ul","ol"]:
+      for li in sib.find_all("li"):
+       z=norm(li.get_text(" ",strip=True))
+       if "漂流石" in z and z not in drift_stones:drift_stones.append(z)
+   drift=bool(drift_stones)
+   out[name]={"max":mx,"category":cat(name),"fire":1 if any(x in name for x in FIRE_WORDS) else 0,"drift":drift,"driftStones":drift_stones,"source":url}
   except Exception as e:print(f"skill warn {url}: {e}",file=sys.stderr)
   time.sleep(.035)
  return out
@@ -70,12 +85,18 @@ def infer_slot(name):
   if any(x in name for x in pats):return slot
  return None
 
-def fetch_armors(skills):
- soup=BeautifulSoup(get(ARMOR_INDEX),"html.parser");links=[]
+def fetch_armors(skills,previous=None):
+ links=[]
+ try:soup=BeautifulSoup(get(ARMOR_INDEX),"html.parser")
+ except Exception as e:
+  print("armor index unavailable, using prior source seeds",str(e),file=sys.stderr);soup=BeautifulSoup("","html.parser")
  for a in soup.select('a[href*="/armors/"]'):
   href=urljoin(ARMOR_INDEX,a.get("href",""));name=norm(a.get_text(" ",strip=True))
   if href.rstrip("/")==ARMOR_INDEX.rstrip("/") or not name:continue
   if href not in [x[1] for x in links]:links.append((name,href))
+ for a in (previous or {}).get("armors",[]):
+  url=a.get("source","")
+  if url.startswith(ARMOR_INDEX) and url not in [v[1] for v in links]:links.append((a["name"],url))
  skill_names=sorted(skills,key=len,reverse=True)
  def one(item):
   fallback,url=item
@@ -86,9 +107,29 @@ def fetch_armors(skills):
    for k in skill_names:
     vals=[int(x) for x in re.findall(re.escape(k).replace("【","[【〖]").replace("】","[】〗]")+r"\s*\+(\d+)",txt)]
     if vals:sd[k]=max(vals)
-   drift=0
-   m=re.search(r"(?:^|\n)8\s*\+(\d+)(?:\n|$)",txt);drift=int(m.group(1)) if m else 0
-   return {"id":"armor_"+url.rstrip('/').split('/')[-1],"slot":slot,"name":name,"monster":"","grade":"G8","drift":drift,"skills":sd,"source":url,"monsterSource":""}
+   # wiki-db's slot column is the TOTAL available slot count at that grade
+   # (e.g. G5 +1, G8 +2 means unlocks at G5 and G8, total 2 slots), not a delta.
+   # Rowspans may repeat the same grade/slot value, so collapse to grade -> max(total slots).
+   slot_by_grade={}
+   for table in sp.find_all("table"):
+    mat=table_matrix(table)
+    if not mat:continue
+    hdr=[norm(x) for x in mat[0]]
+    gi=next((i for i,x in enumerate(hdr) if x.lower()=="grade" or "グレード" in x),None)
+    si=next((i for i,x in enumerate(hdr) if "スロット" in x),None)
+    if gi is None or si is None:continue
+    for row in mat[1:]:
+     if gi>=len(row) or si>=len(row):continue
+     gm=re.search(r"(\d+)",norm(row[gi]));sm=re.search(r"\+?(\d+)",norm(row[si]))
+     if not gm or not sm:continue
+     g=int(gm.group(1));n=int(sm.group(1))
+     slot_by_grade[g]=max(slot_by_grade.get(g,0),n)
+   drift_unlocks=[];current_slots=0
+   for g,n in sorted(slot_by_grade.items()):
+    if n>current_slots:
+     drift_unlocks.extend([g]*(n-current_slots));current_slots=n
+   drift=current_slots
+   return {"id":"armor_"+url.rstrip('/').split('/')[-1],"slot":slot,"name":name,"monster":"","grade":"G10.5","drift":drift,"driftUnlockGrades":drift_unlocks,"skills":sd,"source":url,"monsterSource":""}
   except Exception as e:print(f"armor warn {url}: {e}",file=sys.stderr);return None
  out=[]
  with concurrent.futures.ThreadPoolExecutor(max_workers=6) as ex:
@@ -282,12 +323,13 @@ def fetch_weapons(skills,output_path):
    if typ not in CANON_WEAPON_TYPES:
     raise ValueError("weapon type could not be classified from detail page")
    name=pick_name(sp,slug);monster=parse_monster(lines)
-   best=None
+   best=None;sd={};skill_unlocks=[]
    for table in sp.find_all("table"):
     mat=table_matrix(table)
     if not mat:continue
     hdr=[norm(x) for x in mat[0]]
     if not any("攻撃力" in x for x in hdr):continue
+    skill_idx=next((i for i,h in enumerate(hdr) if "装備スキル" in h),None);grade_idx=next((i for i,h in enumerate(hdr) if "グレード" in h),None);active={}
     for row in mat[1:]:
      row=[norm(x) for x in row];text=" | ".join(row);attack=0;aff=0;elemval=0
      for j,h in enumerate(hdr):
@@ -295,23 +337,25 @@ def fetch_weapons(skills,output_path):
       if "攻撃力" in h:attack=int(num(row[j],0))
       elif "会心率" in h:aff=float(num(row[j],0))
       elif "属性" in h:elemval=int(num(row[j],0))
-     if attack>0 and (best is None or attack>best[2]):best=(row,text,attack,aff,elemval)
+     if skill_idx is not None and skill_idx<len(row):
+      cell=row[skill_idx]
+      for k in skill_names:
+       pat=re.escape(k).replace("【","[【〖]").replace("】","[】〗]")+r"\s*Lv\.?\s*(\d+)"
+       vals=[int(x) for x in re.findall(pat,cell)]
+       if vals:
+        level=max(vals);active[k]=max(level,active.get(k,0));g=row[grade_idx] if grade_idx is not None and grade_idx<len(row) else "";skill_unlocks.append({"grade":g,"skill":k,"level":level})
+     if attack>0 and (best is None or attack>best[2]):best=(row,text,attack,aff,elemval,dict(active))
    if not best:raise ValueError("no weapon status table")
-   row,text,attack,aff,elemval=best;el=element_from(text)
+   row,text,attack,aff,elemval,sd=best;el=element_from(text)
    if elemval<=0:el="無属性";elemval=0
-   sd={};page_text=norm(sp.get_text(" ",strip=True))
-   for k in skill_names:
-    pat=re.escape(k).replace("【","[【〖]").replace("】","[】〗]")+r"\s*Lv\.?\s*(\d+)"
-    vals=[int(x) for x in re.findall(pat,page_text)]
-    if vals:sd[k]=max(vals)
    return {"id":"weapon_"+slug,"name":name,"type":typ,"grade":"G10.5","attack":int(attack),"affinity":aff,
-           "element":el,"elementValue":int(elemval),"skills":sd,"monster":monster,"source":url}
+           "element":el,"elementValue":int(elemval),"skills":sd,"skillUnlocks":skill_unlocks,"monster":monster,"source":url}
   except Exception as e:
    # Preserve a prior record only when its weapon type is already one of the 14 canonical types.
    # This prevents legacy misclassified values such as "防具" from leaking back into the new master.
    old=old_by_slug.get(slug)
    if old and old.get("type") in CANON_WEAPON_TYPES:
-    x=dict(old);x["source"]=url
+    x=dict(old);x["source"]=url;x["provenance"]={**x.get("provenance",{}),"confidence":"stale-fallback","fallbackAt":dt.datetime.now(dt.timezone.utc).isoformat()}
     print(f"weapon fallback old {slug}: {e}",file=sys.stderr);return x
    print(f"weapon warn {url}: {e}",file=sys.stderr);return None
 
@@ -331,10 +375,24 @@ def fetch_weapons(skills,output_path):
  return out
 
 def main():
- ap=argparse.ArgumentParser();ap.add_argument("--output",default="data/mhn_master.json");args=ap.parse_args();print("Fetching skill index...")
- skills=fetch_skills();print("skills",len(skills));print("Fetching armors...");armors=fetch_armors(skills);print("armors",len(armors));print("Fetching weapons...");weapons=fetch_weapons(skills,args.output);print("weapons",len(weapons))
+ ap=argparse.ArgumentParser();ap.add_argument("--output",default="data/mhn_master.json");args=ap.parse_args();previous=json.loads(Path(args.output).read_text()) if Path(args.output).exists() else None;print("Fetching official structured guide...")
+ try:
+  import official_sources
+  if previous is None:previous={"weapons":[{"id":"custom","name":"カスタム武器","type":"任意","attack":1000,"affinity":0,"element":"無属性","elementValue":0,"skills":{}}]}
+  data=official_sources.fetch(get,previous);atomic_publish(data,args.output,previous);print("Published official structured master",len(data["weapons"]),len(data["armors"]),len(data["skills"]));return
+ except Exception as e:print("Official structured route failed; trying existing fallback parsers:",str(e),file=sys.stderr)
+ print("Fetching skill index...")
+ skills=fetch_skills();print("skills",len(skills));drift_skill_count=sum(1 for v in skills.values() if v.get("drift"));print("driftable skills",drift_skill_count);print("Fetching armors...");armors=fetch_armors(skills,previous);print("armors",len(armors));drift_armors=sum(1 for a in armors if int(a.get("drift",0) or 0)>0);max_drift=max([int(a.get("drift",0) or 0) for a in armors] or [0]);print("armors with drift slots",drift_armors,"max slots",max_drift);print("Fetching weapons...");weapons=fetch_weapons(skills,args.output);print("weapons",len(weapons))
  custom={"id":"custom","name":"カスタム武器","type":"任意","grade":"手入力","attack":1764,"affinity":0,"element":"無属性","elementValue":0,"skills":{},"monster":"","source":""}
- data={"version":dt.datetime.now(dt.timezone(dt.timedelta(hours=9))).strftime("%Y-%m-%dT%H%M%S+09-auto"),"generatedAt":dt.datetime.now(dt.timezone.utc).isoformat(),"sourceNote":f"自動生成: official weapons {len(weapons)} / wiki-db armors {len(armors)} / skills {len(skills)}","elements":ELEMENTS,"weapons":[custom]+weapons,"skills":skills,"armors":armors,"materialsCatalog":{}}
+ data={"schemaVersion":6,"version":dt.datetime.now(dt.timezone(dt.timedelta(hours=9))).strftime("%Y-%m-%dT%H%M%S+09-auto"),"generatedAt":dt.datetime.now(dt.timezone.utc).isoformat(),"sourceNote":f"自動生成: official weapons {len(weapons)} / wiki-db armors {len(armors)} / skills {len(skills)}","elements":ELEMENTS,"weapons":[custom]+weapons,"skills":skills,"armors":armors,"materialsCatalog":{}}
  if len(skills)<80 or len(armors)<100 or len(weapons)<100:raise SystemExit(f"coverage too low: skills={len(skills)} armors={len(armors)} weapons={len(weapons)}")
- out=Path(args.output);out.parent.mkdir(parents=True,exist_ok=True);out.write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding="utf-8");print("wrote",out)
+ if drift_skill_count<10:raise SystemExit(f"driftsmelting skill coverage too low: {drift_skill_count}")
+ if drift_armors<50:raise SystemExit(f"driftsmelting armor coverage too low: {drift_armors}")
+ if max_drift>3:raise SystemExit(f"implausible drift slot count detected: {max_drift}")
+ for row in list(skills.values())+armors+weapons:
+  if row.get("provenance",{}).get("confidence")!="stale-fallback":row["provenance"]={"sourceURL":row.get("source"),"retrievedAt":data["generatedAt"],"confidence":"official-parsed" if "monsterhunternow.com/" in row.get("source","") else "community-parsed"}
+ for row in armors:
+  row["driftStatus"]="source-parsed";row["upgradeMaterials"]={"status":"unavailable","steps":[]}
+ for row in weapons:row["upgradeMaterials"]={"status":"unavailable","steps":[]}
+ atomic_publish(data,args.output,previous);print("wrote",args.output)
 if __name__=="__main__":main()
