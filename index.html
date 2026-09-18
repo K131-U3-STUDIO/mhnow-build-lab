@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512.png">
-<title>MH Now Build Lab v0.4.3 PWA</title>
+<title>MH Now Build Lab v0.4.4 PWA</title>
 <style>
 :root{
  --bg:#0a0f15;--panel:#121923;--panel2:#17212d;--line:#293747;--text:#edf3f8;--muted:#98a8b8;
@@ -78,7 +78,7 @@ padding:8px 0;border-bottom:1px solid #263544}.slot:last-child{border-bottom:0}.
 @media(max-width:620px){.app{padding:9px}.header-actions .textbtn{display:none}.grid2,.grid3{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.result{grid-template-columns:44px minmax(0,1fr)}
 .score{grid-column:2;text-align:left}.req-add{grid-template-columns:1fr 58px}.req-add button{grid-column:1/-1}.drift-pool{grid-template-columns:1fr}.searchbox{grid-template-columns:1fr}}
 
-/* v0.4.3 PWA / iOS */
+/* v0.4.4 PWA / iOS */
 html,body{min-height:100%;min-height:100dvh;overscroll-behavior-y:none}
 body{-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;touch-action:manipulation}
 .app{padding-top:max(16px,env(safe-area-inset-top));padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));padding-bottom:max(16px,env(safe-area-inset-bottom))}
@@ -120,7 +120,7 @@ button,.tab,.bottom-tab{-webkit-user-select:none;user-select:none}
 <body>
 <div class="app">
 <header>
- <div class="brand"><div class="logo">MH</div><div><h1>MH Now Build Lab <span class="badge gold">v0.4.3 PWA</span></h1>
+ <div class="brand"><div class="logo">MH</div><div><h1>MH Now Build Lab <span class="badge gold">v0.4.4 PWA</span></h1>
  <div class="sub">火力ランキング / スキル検索 / 漂移錬成 / 比較 / 素材 / iOS PWA</div></div></div>
  <div class="header-actions">
   <span class="badge net online" id="networkBadge">オンライン</span>
@@ -275,7 +275,7 @@ button,.tab,.bottom-tab{-webkit-user-select:none;user-select:none}
  </div></div>
 </section>
 
-<footer>Monster Hunter Now は CAPCOM / Scopely 等の権利物です。本ツールは非公式の個人用シミュレータです。v0.4.3 PWA / 装備データ基準: 2026-09-18。ゲーム更新時は公式表示を優先してください。</footer>
+<footer>Monster Hunter Now は CAPCOM / Scopely 等の権利物です。本ツールは非公式の個人用シミュレータです。v0.4.4 PWA / 装備データ基準: 2026-09-18。ゲーム更新時は公式表示を優先してください。</footer>
 </div>
 
 
@@ -468,9 +468,27 @@ let armorCatalogReady=false;
 let weaponPickerIndexReady=false;
 let weaponPickerRows=[];
 let skillAvailabilityCache=new Map();
-const WEAPON_RENDER_LIMIT=120;
+let armorSlotCache={head:[],chest:[],arms:[],waist:[],legs:[]};
+const WEAPON_RENDER_LIMIT=80;
+const SEARCH_BEAM_LIMIT=2600;
+const SEARCH_FINAL_LIMIT=700;
+const SEARCH_POWER_SLOT_LIMIT=22;
+const SEARCH_SKILL_SLOT_LIMIT=34;
+const CANON_WEAPON_TYPES=["片手剣","双剣","大剣","太刀","ハンマー","狩猟笛","ランス","ガンランス","スラッシュアックス","チャージアックス","操虫棍","ライトボウガン","ヘビィボウガン","弓"];
+const WEAPON_SUFFIX_TYPE={swordshield:"片手剣",dualblades:"双剣",greatsword:"大剣",longsword:"太刀",hammer:"ハンマー",huntinghorn:"狩猟笛",lance:"ランス",gunlance:"ガンランス",switchaxe:"スラッシュアックス",chargeblade:"チャージアックス",insectglaive:"操虫棍",lightbowgun:"ライトボウガン",heavybowgun:"ヘビィボウガン",bow:"弓"};
+const MODELED_POWER_SKILLS=["攻撃","攻撃・境地","力任せ","見切り","弱点特効","力の解放","グループハント強化【攻撃】","連撃","攻めの守勢","火事場力","超会心","会心撃【属性】","滅尽龍の渇望","闘気活性","ジャスト巧撃【持続】","闇討ち","キリンの雷角"];
 
+function normalizeWeaponType(w){
+ let t=String(w?.type||"").normalize("NFKC").replace(/\s+/g,"");
+ if(t==="チャージアックス")t="チャージアックス";
+ if(CANON_WEAPON_TYPES.includes(t))return t;
+ const src=String(w?.source||"").toLowerCase(),slug=(src.split("/").filter(Boolean).pop()||"").split("?")[0];
+ for(const [suffix,ja] of Object.entries(WEAPON_SUFFIX_TYPE))if(slug===suffix||slug.endsWith("_"+suffix))return ja;
+ return "";
+}
 function rebuildFastIndexes(){
+ armorSlotCache={head:[],chest:[],arms:[],waist:[],legs:[]};
+ for(const a of DB.armors)if(armorSlotCache[a.slot])armorSlotCache[a.slot].push(a);
  weaponPickerRows=DB.weapons.filter(w=>w.id!=="custom").map(w=>({w,search:[w.name,w.type,w.element,w.monster,w.sourceMaterial].filter(Boolean).join(" ").toLowerCase()}));
  skillAvailabilityCache=new Map();
  for(const a of DB.armors)for(const k of Object.keys(a.skills||{})){const x=skillAvailabilityCache.get(k)||{a:0,w:0};x.a++;skillAvailabilityCache.set(k,x)}
@@ -482,9 +500,17 @@ function nextPaint(){return new Promise(resolve=>requestAnimationFrame(()=>resol
 function normalizeMaster(o){
  if(!o.elements)o.elements=BUILTIN.elements;
  if(!o.skills)o.skills={};
- // Merge the current built-in skill catalog so a generated master never hides a newly-known skill name.
  for(const [k,v] of Object.entries(BUILTIN.skills))if(!o.skills[k])o.skills[k]=v;
  if(!Array.isArray(o.weapons))o.weapons=[];if(!Array.isArray(o.armors))o.armors=[];
+ const cleaned=[];
+ for(const w0 of o.weapons){
+  const w={...w0};
+  if(w.id==="custom"){cleaned.push(w);continue}
+  const t=normalizeWeaponType(w);
+  if(!t)continue;
+  w.type=t;cleaned.push(w);
+ }
+ o.weapons=cleaned;
  if(!o.weapons.some(w=>w.id==="custom"))o.weapons.unshift(JSON.parse(JSON.stringify(BUILTIN.weapons[0])));
  if(!o.materialsCatalog)o.materialsCatalog={};
  return o;
@@ -518,11 +544,13 @@ function renderWeaponPicker(){
  document.querySelectorAll("#weaponPickerList .weapon-row").forEach(b=>b.onclick=()=>{const w=DB.weapons.find(x=>x.id===b.dataset.id);if(!w)return;$("weaponSelect").innerHTML=`<option value="${esc(w.id)}">${esc(w.name)}</option>`;$("weaponSelect").value=w.id;setWeapon(w);$("weaponModal").classList.remove("open")});
 }
 function openWeaponPicker(){
- const types=[...new Set(DB.weapons.filter(w=>w.id!=="custom").map(w=>w.type).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"ja"));
+ const present=new Set(DB.weapons.filter(w=>w.id!=="custom").map(w=>w.type).filter(Boolean));
+ const types=CANON_WEAPON_TYPES.filter(x=>present.has(x));
  const els=[...new Set(DB.weapons.filter(w=>w.id!=="custom").map(w=>w.element||"無属性"))];
  $("weaponTypeFilter").innerHTML='<option value="">全武器種</option>'+types.map(x=>`<option>${esc(x)}</option>`).join("");
  $("weaponElementFilter").innerHTML='<option value="">全属性</option>'+els.map(x=>`<option>${esc(x)}</option>`).join("");
- $("weaponSearch").value="";$("weaponModal").classList.add("open");renderWeaponPicker();
+ $("weaponSearch").value="";$("weaponTypeFilter").value="";$("weaponElementFilter").value="";
+ $("weaponModal").classList.add("open");renderWeaponPicker();
 }
 function skillAvailability(k){return skillAvailabilityCache.get(k)||{a:0,w:0};}
 function renderSkillCategories(){
@@ -540,9 +568,15 @@ function renderSkillCatalog(){
  $("skillCheckList").innerHTML=names.map(k=>{const d=DB.skills[k]||{},max=d.max||5,sel=requirements[k]||0,av=skillAvailability(k);let opts="";for(let n=1;n<=max;n++)opts+=`<option value="${n}" ${sel===n?"selected":""}>Lv${n}</option>`;return `<div class="skill-row ${sel?"selected":""}" data-skill="${esc(k)}"><input class="skill-check" type="checkbox" ${sel?"checked":""}><div><div class="sname">${esc(k)}</div><div class="smeta">防具 ${av.a} / 武器 ${av.w}${d.drift?" / 漂移可":""}</div></div><select class="skill-lv">${opts}</select></div>`}).join("");
  document.querySelectorAll("#skillCheckList .skill-row").forEach(row=>{const k=row.dataset.skill,cb=row.querySelector(".skill-check"),lvsel=row.querySelector(".skill-lv");cb.onchange=()=>{if(cb.checked)requirements[k]=+lvsel.value||1;else delete requirements[k];renderReq();persist();renderSkillCatalog()};lvsel.onchange=()=>{if(cb.checked){requirements[k]=+lvsel.value;renderReq();persist()} };});
 }
-function relevantSkills(req,weapon){const set=new Set(Object.keys(req||{}));for(const [k,v] of Object.entries(DB.skills))if(v?.fire)set.add(k);for(const k of Object.keys(weapon.skills||{}))set.add(k);if($("driftMode").value==="auto")for(const k of selectedDriftCandidates(weapon))set.add(k);return [...set]}
-function stateKey(skills,rel,slots){return rel.map(k=>Math.min(skills[k]||0,maxLv(k))).join(",")+"#"+slots}
+function relevantSkills(req,weapon){
+ const set=new Set([...MODELED_POWER_SKILLS,...Object.keys(req||{}),...Object.keys(weapon.skills||{})]);
+ const es=elementSkill(weapon.element),ea=elementAdvanced(weapon.element);if(es)set.add(es);if(ea)set.add(ea);
+ if($("driftMode").value==="auto")for(const k of selectedDriftCandidates(weapon))set.add(k);
+ return [...set].filter(k=>DB.skills[k]||Object.prototype.hasOwnProperty.call(req||{},k)||Object.prototype.hasOwnProperty.call(weapon.skills||{},k));
+}
+function stateKey(skills,rel,slots){return rel.map(k=>Math.min(skills[k]||0,maxLv(k))).join(",")+"#"+Math.min(slots,5)}
 function reqDeficit(skills,req){let d=0;for(const [k,v] of Object.entries(req||{}))d+=Math.max(0,v-(skills[k]||0));return d}
+function reqProgress(skills,req){let p=0;for(const [k,v] of Object.entries(req||{}))p+=Math.min(v,skills[k]||0);return p}
 function bestAutoDrift(base,slots,candidates,weapon,req){
  const extraReq=Object.keys(req||{}).filter(k=>DB.skills[k]?.drift!==false);candidates=[...new Set([...candidates,...extraReq])].slice(0,14);
  let states=[{add:{},skills:base,score:calcFromSkills(base,weapon).score}];
@@ -558,8 +592,45 @@ function currentWeapon(){
  return {...preset,attack:+$("rawInput").value||0,affinity:+$("affInput").value||0,element:$("elementSelect").value,elementValue:+$("elemInput").value||0};
 }
 function setWeapon(w){if(!w)return;$("rawInput").value=w.attack||0;$("affInput").value=w.affinity||0;$("elementSelect").value=w.element||"無属性";$("elemInput").value=w.elementValue||0;updateWeaponSummary(w)}
-function usable(slot){return DB.armors.filter(a=>a.slot===slot&&!excluded.has(a.id))}
+function usable(slot){return (armorSlotCache[slot]||[]).filter(a=>!excluded.has(a.id))}
 function driftSlots(parts){return parts.reduce((n,p)=>n+(+p.drift||0),0)}
+function armorLocalPriority(p,weapon,req,base){
+ const ps=p.skills||{};let reqScore=0;
+ for(const [k,v] of Object.entries(req||{}))reqScore+=Math.min(v,ps[k]||0)*10000000;
+ const merged=combine(base,ps),power=calcFromSkills(merged,weapon).score;
+ return reqScore+power+(+p.drift||0)*25;
+}
+function candidateArmors(slot,weapon,req,base){
+ const all=usable(slot);if(all.length<=SEARCH_SKILL_SLOT_LIMIT)return all;
+ const limit=Object.keys(req||{}).length?SEARCH_SKILL_SLOT_LIMIT:SEARCH_POWER_SLOT_LIMIT;
+ const scored=all.map(p=>({p,q:armorLocalPriority(p,weapon,req,base)})).sort((a,b)=>b.q-a.q);
+ const keep=new Map(scored.slice(0,limit).map(x=>[x.p.id,x.p]));
+ if(Object.keys(req||{}).length){
+  for(const k of Object.keys(req)){
+   let n=0;
+   for(const x of scored){if((x.p.skills?.[k]||0)>0){keep.set(x.p.id,x.p);if(++n>=10)break}}
+  }
+ }
+ return [...keep.values()].sort((a,b)=>armorLocalPriority(b,weapon,req,base)-armorLocalPriority(a,weapon,req,base)).slice(0,Math.max(limit,40));
+}
+function searchPriority(st,weapon,req){
+ const target=Object.values(req||{}).reduce((a,b)=>a+(+b||0),0);
+ const progress=target?reqProgress(st.skills,req)/target:0;
+ const deficit=reqDeficit(st.skills,req);
+ return progress*1e9-deficit*1e7+calcFromSkills(st.skills,weapon).score+(st.slots||0)*10;
+}
+function canMeetAfterDrift(st,req){
+ if(!Object.keys(req||{}).length)return true;
+ const mode=$("driftMode").value;
+ if(mode==="none")return reqMet(st.skills,req);
+ if(mode==="manual")return reqMet(combine(st.skills,manualDrift),req);
+ let need=0;
+ for(const [k,v] of Object.entries(req)){
+  const d=Math.max(0,v-(st.skills[k]||0));if(!d)continue;
+  if(DB.skills[k]?.drift===false)return false;need+=d;
+ }
+ return need<=st.slots;
+}
 
 function selectedDriftCandidates(weapon){
  const nodes=[...document.querySelectorAll("#driftPool input:checked")].map(x=>x.value);
@@ -599,16 +670,30 @@ function evaluate(parts,weapon,req={}){
  const c=calcFromSkills(bestDrift.skills,weapon);return {...c,skills:bestDrift.skills,drift:{...bestDrift.add},slots,usedDrift:Object.values(bestDrift.add).reduce((a,b)=>a+b,0)};
 }
 
-function enumerate(req={}){
- const weapon=currentWeapon(),lists=SLOT_ORDER.map(usable);if(lists.some(x=>x.length===0))return [];
- const rel=relevantSkills(req,weapon);let states=[{parts:[],skills:sumSkills([],weapon.skills,{}),slots:0}];
- for(const list of lists){
-  const map=new Map();
-  for(const st of states)for(const p of list){const skills=combine(st.skills,p.skills||{}),slots=st.slots+(+p.drift||0),key=stateKey(skills,rel,slots);let arr=map.get(key);if(!arr){arr=[];map.set(key,arr)}if(arr.length<2)arr.push({parts:[...st.parts,p],skills,slots});}
-  states=[...map.values()].flat();
-  if(states.length>80000){states.sort((a,b)=>calcFromSkills(b.skills,weapon).score-calcFromSkills(a.skills,weapon).score);states=states.slice(0,60000)}
+async function enumerate(req={},progressCb=null){
+ const weapon=currentWeapon(),base=sumSkills([],weapon.skills,{}),rel=relevantSkills(req,weapon);
+ const lists=SLOT_ORDER.map(slot=>candidateArmors(slot,weapon,req,base));if(lists.some(x=>x.length===0))return [];
+ let states=[{parts:[],skills:base,slots:0}];
+ for(let si=0;si<lists.length;si++){
+  const list=lists[si],map=new Map();
+  for(const st of states){
+   for(const p of list){
+    const skills=combine(st.skills,p.skills||{}),slots=st.slots+(+p.drift||0),key=stateKey(skills,rel,slots);
+    if(!map.has(key))map.set(key,{parts:[...st.parts,p],skills,slots});
+   }
+  }
+  states=[...map.values()];
+  if(states.length>SEARCH_BEAM_LIMIT){states.sort((a,b)=>searchPriority(b,weapon,req)-searchPriority(a,weapon,req));states=states.slice(0,SEARCH_BEAM_LIMIT)}
+  if(progressCb)progressCb(`検索中… ${SLOT_JA[SLOT_ORDER[si]]} ${states.length.toLocaleString()}候補`);
+  await nextPaint();
  }
- const out=[];for(const st of states){const ev=evaluate(st.parts,weapon,req);if(ev)out.push({parts:st.parts,...ev})}return out;
+ states=states.filter(st=>canMeetAfterDrift(st,req)).sort((a,b)=>searchPriority(b,weapon,req)-searchPriority(a,weapon,req)).slice(0,SEARCH_FINAL_LIMIT);
+ const out=[];
+ for(let i=0;i<states.length;i++){
+  const st=states[i],ev=evaluate(st.parts,weapon,req);if(ev)out.push({parts:st.parts,...ev});
+  if(i%70===69){if(progressCb)progressCb(`最終評価中… ${i+1}/${states.length}`);await nextPaint()}
+ }
+ return out;
 }
 
 function chipHtml(skills,drift={},req={}){
@@ -626,26 +711,36 @@ function resultHtml(r,i,req={}){
  <div class="score">${r.score.toFixed(1)}<small>火力指数 / 漂移 ${r.usedDrift}/${r.slots}</small></div></div>`;
 }
 
-function runPower(){
- $("powerResults").innerHTML=`<div class="empty">計算中…</div>`;
- const all=enumerate({});all.sort((a,b)=>b.score-a.score);lastPower=all.slice(0,50);
- $("powerResults").innerHTML=lastPower.length?lastPower.map((r,i)=>resultHtml(r,i)).join(""):`<div class="empty">候補がありません。除外装備や漂移指定を確認してください。</div>`;
- $("stEvaluated").textContent=all.length.toLocaleString();$("stBest").textContent=lastPower[0]?lastPower[0].score.toFixed(1):"-";$("stDrift").textContent=lastPower[0]?lastPower[0].slots:"0";
- bindResults("powerResults",lastPower);updateStats();
+let searchBusy=false;
+async function runPower(){
+ if(searchBusy)return;searchBusy=true;$("powerSearch").disabled=true;$("skillSearch").disabled=true;
+ const status=t=>$("powerResults").innerHTML=`<div class="empty">${esc(t)}</div>`;
+ try{
+  status("検索準備中…");const all=await enumerate({},status);all.sort((a,b)=>b.score-a.score);lastPower=all.slice(0,50);
+  $("powerResults").innerHTML=lastPower.length?lastPower.map((r,i)=>resultHtml(r,i)).join(""):`<div class="empty">候補がありません。除外装備や漂移指定を確認してください。</div>`;
+  $("stEvaluated").textContent=all.length.toLocaleString();$("stBest").textContent=lastPower[0]?lastPower[0].score.toFixed(1):"-";$("stDrift").textContent=lastPower[0]?lastPower[0].slots:"0";
+  bindResults("powerResults",lastPower);updateStats();
+ }catch(e){$("powerResults").innerHTML=`<div class="diag">検索エラー: ${esc(e.message||e)}</div>`}
+ finally{searchBusy=false;$("powerSearch").disabled=false;$("skillSearch").disabled=false}
 }
-function runSkill(){
+async function runSkill(){
+ if(searchBusy)return;
  if(Object.keys(requirements).length===0){$("skillCount").textContent="0件";$("skillResults").innerHTML=`<div class="diag">スキルを1つ以上チェックしてください。上の一覧は文字検索・カテゴリ絞り込みができます。</div>`;return}
- $("skillResults").innerHTML=`<div class="empty">構成を最適化中…</div>`;
- const all=enumerate(requirements),sort=$("skillSort").value,target=Object.values(requirements).reduce((a,b)=>a+b,0);
- if(sort==="score")all.sort((a,b)=>b.score-a.score);
- else if(sort==="slots")all.sort((a,b)=>(b.slots-b.usedDrift)-(a.slots-a.usedDrift)||b.score-a.score);
- else all.sort((a,b)=>{
-  const ea=Object.values(a.skills).reduce((x,y)=>x+y,0)-target,eb=Object.values(b.skills).reduce((x,y)=>x+y,0)-target;
-  return ea-eb||b.score-a.score;
- });
- lastSkill=all.slice(0,50);$("skillCount").textContent=`${all.length}件`;
- $("skillResults").innerHTML=lastSkill.length?lastSkill.map((r,i)=>resultHtml(r,i,requirements)).join(""):`<div class="empty">条件を満たす構成がありません。</div>`;
- bindResults("skillResults",lastSkill);
+ searchBusy=true;$("powerSearch").disabled=true;$("skillSearch").disabled=true;
+ const status=t=>$("skillResults").innerHTML=`<div class="empty">${esc(t)}</div>`;
+ try{
+  status("検索準備中…");const all=await enumerate(requirements,status),sort=$("skillSort").value,target=Object.values(requirements).reduce((a,b)=>a+b,0);
+  if(sort==="score")all.sort((a,b)=>b.score-a.score);
+  else if(sort==="slots")all.sort((a,b)=>(b.slots-b.usedDrift)-(a.slots-a.usedDrift)||b.score-a.score);
+  else all.sort((a,b)=>{
+   const ea=Object.values(a.skills).reduce((x,y)=>x+y,0)-target,eb=Object.values(b.skills).reduce((x,y)=>x+y,0)-target;
+   return ea-eb||b.score-a.score;
+  });
+  lastSkill=all.slice(0,50);$("skillCount").textContent=`${all.length}件`;
+  $("skillResults").innerHTML=lastSkill.length?lastSkill.map((r,i)=>resultHtml(r,i,requirements)).join(""):`<div class="empty">条件を満たす構成がありません。</div>`;
+  bindResults("skillResults",lastSkill);
+ }catch(e){$("skillResults").innerHTML=`<div class="diag">検索エラー: ${esc(e.message||e)}</div>`}
+ finally{searchBusy=false;$("powerSearch").disabled=false;$("skillSearch").disabled=false}
 }
 function bindResults(container,arr){
  document.querySelectorAll(`#${container} .result`).forEach(el=>el.addEventListener("click",e=>{
@@ -778,7 +873,7 @@ function showTab(name){
  if(window.innerWidth<=760)window.scrollTo({top:0,behavior:"auto"});
 }
 async function exportBackup(){
- const data={app:"MH Now Build Lab",version:"0.4.3",exportedAt:new Date().toISOString(),excluded:[...excluded],mysets,requirements,manualDrift};
+ const data={app:"MH Now Build Lab",version:"0.4.4",exportedAt:new Date().toISOString(),excluded:[...excluded],mysets,requirements,manualDrift};
  const text=JSON.stringify(data,null,2),stamp=new Date().toISOString().slice(0,10),name=`MHNow_Build_Lab_backup_${stamp}.json`;
  let file=null;try{file=new File([text],name,{type:"application/json"})}catch(_e){}
  try{
@@ -842,7 +937,7 @@ async function init(){
  $("weaponSelect").onchange=()=>setWeapon(DB.weapons.find(w=>w.id===$("weaponSelect").value)||DB.weapons[0]);
  $("weaponPickerBtn").onclick=openWeaponPicker;$("weaponClose").onclick=()=>$("weaponModal").classList.remove("open");$("weaponModal").onclick=e=>{if(e.target===$("weaponModal"))$("weaponModal").classList.remove("open")};
  let weaponSearchTimer=0;$("weaponSearch").oninput=()=>{clearTimeout(weaponSearchTimer);weaponSearchTimer=setTimeout(renderWeaponPicker,120)};$("weaponTypeFilter").onchange=renderWeaponPicker;$("weaponElementFilter").onchange=renderWeaponPicker;$("weaponCustomBtn").onclick=()=>{const w=DB.weapons.find(w=>w.id==="custom")||DB.weapons[0];$("weaponSelect").innerHTML=`<option value="${esc(w.id)}">${esc(w.name)}</option>`;$("weaponSelect").value=w.id;setWeapon(w);$("weaponModal").classList.remove("open")};
- $("skillSearchText").oninput=()=>{renderSkillCatalog();skillCatalogReady=true};$("skillSelectedOnly").onchange=()=>{renderSkillCatalog();skillCatalogReady=true};$("clearReq").onclick=()=>{requirements={};renderReq();persist();renderSkillCatalog();skillCatalogReady=true};
+ let skillTextTimer=0;$("skillSearchText").oninput=()=>{clearTimeout(skillTextTimer);skillTextTimer=setTimeout(()=>{renderSkillCatalog();skillCatalogReady=true},120)};$("skillSelectedOnly").onchange=()=>{renderSkillCatalog();skillCatalogReady=true};$("clearReq").onclick=()=>{requirements={};renderReq();persist();renderSkillCatalog();skillCatalogReady=true};
  $("powerSearch").onclick=runPower;$("skillSearch").onclick=runSkill;
  $("addSkill").onclick=()=>{};$("addManualDrift").onclick=()=>{const k=$("manualDriftSkill").value;manualDrift[k]=clamp(+$("manualDriftLevel").value||1,1,maxLv(k));renderManualDrift();persist()};
  $("driftMode").onchange=()=>{$("autoDriftBox").classList.toggle("hide",$("driftMode").value!=="auto");$("manualDriftBox").classList.toggle("hide",$("driftMode").value!=="manual")};
