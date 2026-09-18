@@ -4,9 +4,9 @@ Sources: mhnow.wiki-db.com (skills/armor) and monsterhunternow.com (weapons).
 Designed for GitHub Actions. It is intentionally rate-limited and records source URLs.
 """
 from __future__ import annotations
-import argparse, concurrent.futures, datetime as dt, json, re, sys, time
+import argparse, concurrent.futures, datetime as dt, json, re, sys, time, unicodedata
 from pathlib import Path
-from urllib.parse import urljoin, urlparse, unquote
+from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 
@@ -15,12 +15,21 @@ HEADERS={"User-Agent":UA,"Accept-Language":"ja-JP,ja;q=0.9,en;q=0.5"}
 SKILL_INDEX="https://mhnow.wiki-db.com/skills/"
 ARMOR_INDEX="https://mhnow.wiki-db.com/armors/"
 WEAPON_INDEX="https://monsterhunternow.com/weapons"
-WEAPON_JA_ROOT="https://monsterhunternow.com/ja/weapons/"
+JA_WEAPON_BASE="https://monsterhunternow.com/ja/weapons/"
+WEAPON_SUFFIX_TYPE={
+ "swordshield":"片手剣","dualblades":"双剣","greatsword":"大剣","longsword":"太刀",
+ "hammer":"ハンマー","huntinghorn":"狩猟笛","lance":"ランス","gunlance":"ガンランス",
+ "switchaxe":"スラッシュアックス","chargeblade":"チャージアックス","insectglaive":"操虫棍",
+ "lightbowgun":"ライトボウガン","heavybowgun":"ヘビィボウガン","bow":"弓"
+}
+CANON_WEAPON_TYPES=list(WEAPON_SUFFIX_TYPE.values())
 ELEMENTS=["無属性","火","水","雷","氷","龍","毒","麻痺","睡眠","爆破"]
 
 ALIASES={"会心撃〖属性〗":"会心撃【属性】","団結力〖秋のかぼちゃ狩り〗":"団結力【秋のかぼちゃ狩り】","SPゲージ加速〖ジャスト回避〗":"SPゲージ加速【ジャスト回避】","闇討ち〖状態異常〗":"闇討ち【状態異常】","グループハント強化〖防御〗":"グループハント強化【防御】","グループハント強化〖攻撃〗":"グループハント強化【攻撃】","破壊王〖SPスキル〗":"破壊王【SPスキル】","追い打ち〖毒〗":"追い打ち【毒】","追い打ち〖麻痺〗":"追い打ち【麻痺】","ジャスト巧撃〖状態異常〗":"ジャスト巧撃【状態異常】","ジャスト巧撃〖持続〗":"ジャスト巧撃【持続】","絶対回避〖SP〗":"絶対回避【SP】","攻撃増強〖会心〗":"攻撃増強【会心】","破壊王〖尻尾〗":"破壊王【尻尾】","属性攻撃増強〖SP〗":"属性攻撃増強【SP】","SPゲージ加速〖ガード〗":"SPゲージ加速【ガード】","SPゲージ加速〖受け流し〗":"SPゲージ加速【受け流し】"}
 def norm(s:str)->str:
- s=re.sub(r"\s+"," ",s or "").strip();return ALIASES.get(s,s)
+ s=unicodedata.normalize("NFKC",s or "")
+ s=re.sub(r"\s+"," ",s).strip()
+ return ALIASES.get(s,s)
 def get(url,timeout=30):
  r=requests.get(url,headers=HEADERS,timeout=timeout);r.raise_for_status();return r.text
 
@@ -113,12 +122,20 @@ def table_matrix(table):
   fill_spans();rows.append(row)
  return rows
 
-def parse_type(lines,label):
- try:
-  i=lines.index(label)
-  for x in lines[i+1:i+6]:
-   if x and x not in ["Image","ステータス"]:return x
- except ValueError:pass
+def nearest_value_before(lines,anchor,candidates):
+ try:i=lines.index(anchor)
+ except ValueError:return ""
+ for x in reversed(lines[max(0,i-12):i]):
+  x=norm(x)
+  if x in candidates:return x
+ return ""
+
+def parse_monster(lines):
+ try:i=lines.index("関連するモンスター")
+ except ValueError:return ""
+ for x in lines[i+1:i+8]:
+  x=norm(x)
+  if x and x not in ["Image","ステータス","なし"]:return x
  return ""
 def element_from(s):
  low=s.lower();maps=[("fire","火"),("water","水"),("thunder","雷"),("ice","氷"),("dragon","龍"),("poison","毒"),("paralysis","麻痺"),("sleep","睡眠"),("blast","爆破")]
@@ -128,128 +145,85 @@ def element_from(s):
 def num(s,default=0):
  m=re.search(r"-?\d+(?:\.\d+)?",s.replace(",",""));return float(m.group()) if m else default
 
-def _weapon_slug(url):
- path=urlparse(url).path
- m=re.search(r"/(?:ja/|en/)?weapons/([^/?#]+)/?$",path,re.I)
- if not m:return None
- slug=m.group(1).strip()
- if not slug or slug.lower() in {"weapons","weapon"}:return None
- return slug
-
-def _extract_weapon_slugs(text):
- """Extract weapon-family slugs from HTML/JSON/script text."""
- if not text:return set()
- raw=unquote(text.replace(r"\/","/"))
- out=set()
- # Normal/JSON-embedded URLs and relative routes.
- for m in re.finditer(r"/(?:ja/|en/)?weapons/([A-Za-z0-9_\-]+)",raw,re.I):
-  slug=m.group(1)
-  if slug.lower() not in {"weapons","weapon"}:out.add(slug)
- # Next.js payload fallback: weapon slugs commonly end in a weapon-type token.
- suffix=(r"swordshield|sword_and_shield|dualblades|dual_blades|greatsword|great_sword|"
-         r"longsword|long_sword|hammer|huntinghorn|hunting_horn|lance|gunlance|gun_lance|"
-         r"switchaxe|switch_axe|chargeblade|charge_blade|insectglaive|insect_glaive|"
-         r"lightbowgun|light_bowgun|heavybowgun|heavy_bowgun|bow")
- for m in re.finditer(rf"\b([a-z0-9][a-z0-9_\-]*_(?:{suffix}))\b",raw,re.I):out.add(m.group(1))
- return out
-
-def _discover_from_sitemaps():
- """Best-effort sitemap discovery. Handles sitemap indexes one level deep."""
- slugs=set();todo=[];seen=set()
- for u in ["https://monsterhunternow.com/sitemap.xml","https://monsterhunternow.com/sitemap_index.xml"]:
-  try:
-   body=get(u,30)
-   todo.append((u,body))
-  except Exception:
-   pass
- try:
-  robots=get("https://monsterhunternow.com/robots.txt",20)
-  for u in re.findall(r"(?im)^\s*Sitemap:\s*(https?://\S+)",robots):
-   if u not in [x[0] for x in todo]:
-    try:todo.append((u,get(u,30)))
-    except Exception:pass
- except Exception:
-  pass
- for _,body in list(todo):
-  slugs|=_extract_weapon_slugs(body)
-  for loc in re.findall(r"<loc>\s*([^<]+\.xml(?:\?[^<]*)?)\s*</loc>",body,re.I):
-   loc=loc.replace("&amp;","&")
-   if loc in seen:continue
-   seen.add(loc)
-   try:slugs|=_extract_weapon_slugs(get(loc,30))
-   except Exception:pass
- return slugs
-
-def discover_weapon_slugs():
- """Discover weapon detail slugs without depending on the Japanese index DOM."""
- slugs=_discover_from_sitemaps()
- for index in ["https://monsterhunternow.com/weapons","https://monsterhunternow.com/en/weapons","https://monsterhunternow.com/ja/weapons"]:
-  try:
-   body=get(index,60);sp=BeautifulSoup(body,"html.parser")
-   slugs|=_extract_weapon_slugs(body)
-   for a in sp.find_all("a",href=True):
-    slug=_weapon_slug(urljoin(index,a["href"]))
-    if slug:slugs.add(slug)
-  except Exception as e:
-   print(f"weapon discovery warn {index}: {e}",file=sys.stderr)
- print("weapon slugs discovered",len(slugs))
- return sorted(slugs)
-
 def fetch_weapons(skills):
- slugs=discover_weapon_slugs()
- if len(slugs)<20:
-  print("weapon discovery sample",slugs[:20],file=sys.stderr)
-  return []
+ html=get(WEAPON_INDEX,60);soup=BeautifulSoup(html,"html.parser");slugs=set()
+ suffixes=tuple("_"+x for x in WEAPON_SUFFIX_TYPE)
+ for a in soup.find_all("a",href=True):
+  h=a.get("href","")
+  m=re.search(r"/(?:ja/)?weapons/([A-Za-z0-9_\-]+)",h)
+  if not m:continue
+  slug=m.group(1).strip("/")
+  if slug.endswith(suffixes):slugs.add(slug)
+ if not slugs:
+  for slug in re.findall(r'(?:/|")weapons/([A-Za-z0-9_\-]+)',html):
+   if slug.endswith(suffixes):slugs.add(slug)
+ print("weapon slugs discovered",len(slugs))
  skill_names=sorted(skills,key=len,reverse=True)
+
+ def type_from_slug(slug):
+  for suffix,ja in WEAPON_SUFFIX_TYPE.items():
+   if slug==suffix or slug.endswith("_"+suffix):return ja
+  return ""
+
+ def pick_name(sp,slug):
+  vals=[norm(h.get_text(" ",strip=True)) for h in sp.find_all("h1")]
+  vals=[x for x in vals if x and x not in ["武器種","Weapons","Weapon Type"] and x not in CANON_WEAPON_TYPES]
+  if vals:return vals[-1]
+  title=norm(sp.title.get_text(" ",strip=True) if sp.title else "")
+  title=re.sub(r"\s*[–|-]\s*Monster Hunter Now.*$","",title).strip()
+  return title or slug
+
  def one(slug):
-  # Discovery is done from the public English/global index, but detail parsing uses
-  # Japanese pages so weapon type, monster and equipment-skill names match our UI.
-  url=urljoin(WEAPON_JA_ROOT,slug)
+  url=urljoin(JA_WEAPON_BASE,slug)
   try:
-   sp=BeautifulSoup(get(url,40),"html.parser");h1=sp.find("h1");family_name=norm(h1.get_text(" ",strip=True) if h1 else slug);lines=[norm(x) for x in sp.stripped_strings];typ=parse_type(lines,"武器種");monster=parse_type(lines,"関連するモンスター")
-   best=None;best_attack=-1
+   typ=type_from_slug(slug)
+   if not typ:return None
+   sp=BeautifulSoup(get(url,40),"html.parser")
+   lines=[norm(x) for x in sp.stripped_strings]
+   if "関連するモンスター" not in lines:return None
+   page_type=nearest_value_before(lines,"関連するモンスター",set(CANON_WEAPON_TYPES))
+   if page_type and page_type!=typ:
+    print(f"weapon type mismatch {slug}: slug={typ} page={page_type}",file=sys.stderr)
+    typ=page_type
+   if typ not in CANON_WEAPON_TYPES:return None
+   name=pick_name(sp,slug);monster=parse_monster(lines)
+
+   best=None
    for table in sp.find_all("table"):
     mat=table_matrix(table)
     if not mat:continue
-    hdr=mat[0]
+    hdr=[norm(x) for x in mat[0]]
     if not any("攻撃力" in x for x in hdr):continue
-    last_aff=0.0;last_elem_text="";last_elem_val=0;last_name=family_name
     for row in mat[1:]:
-     if not row:continue
-     text=" | ".join(row);attack=0;aff=None;elemval=None;elemtext=""
+     row=[norm(x) for x in row];text=" | ".join(row);attack=0;aff=0;elemval=0
      for j,h in enumerate(hdr):
       if j>=len(row):continue
-      v=row[j]
-      if "名前" in h and v and not re.fullmatch(r"10\s*Lv\.?\s*5",v,re.I):last_name=norm(v)
-      elif "攻撃力" in h:attack=int(num(v,0))
-      elif "会心率" in h:
-       if "%" in v or re.search(r"-?\d",v):aff=float(num(v,last_aff))
-      elif "属性" in h:
-       elemtext=v
-       if "なし" in v or "None" in v:elemval=0
-       elif re.search(r"\d",v):elemval=int(num(v,last_elem_val))
-     if aff is not None:last_aff=aff
-     if elemtext:
-      last_elem_text=elemtext
-      if elemval is not None:last_elem_val=elemval
-     if attack>best_attack:
-      best_attack=attack
-      best=(last_name,text,attack,last_aff,last_elem_val,last_elem_text)
+      if "攻撃力" in h:attack=int(num(row[j],0))
+      elif "会心率" in h:aff=float(num(row[j],0))
+      elif "属性" in h:elemval=int(num(row[j],0))
+     if attack>0 and (best is None or attack>best[2]):best=(row,text,attack,aff,elemval)
    if not best:return None
-   final_name,text,attack,aff,elemval,elemtext=best
-   el=element_from((elemtext or "")+" "+text)
+   row,text,attack,aff,elemval=best;el=element_from(text)
    if elemval<=0:el="無属性";elemval=0
-   sd={};page_text=sp.get_text(" ",strip=True)
+   sd={};page_text=norm(sp.get_text(" ",strip=True))
    for k in skill_names:
     pat=re.escape(k).replace("【","[【〖]").replace("】","[】〗]")+r"\s*Lv\.?\s*(\d+)"
     vals=[int(x) for x in re.findall(pat,page_text)]
     if vals:sd[k]=max(vals)
-   return {"id":"weapon_"+slug,"name":final_name or family_name,"type":typ or "不明","grade":"G10.5","attack":int(attack),"affinity":aff,"element":el,"elementValue":int(elemval),"skills":sd,"monster":monster,"source":url}
-  except Exception as e:print(f"weapon warn {url}: {e}",file=sys.stderr);return None
+   return {"id":"weapon_"+slug,"name":name,"type":typ,"grade":"G10.5","attack":int(attack),"affinity":aff,
+           "element":el,"elementValue":int(elemval),"skills":sd,"monster":monster,"source":url}
+  except Exception as e:
+   print(f"weapon warn {url}: {e}",file=sys.stderr);return None
+
  out=[]
- with concurrent.futures.ThreadPoolExecutor(max_workers=8) as ex:
-  for x in ex.map(one,slugs):
+ with concurrent.futures.ThreadPoolExecutor(max_workers=5) as ex:
+  for x in ex.map(one,sorted(slugs)):
    if x:out.append(x)
+ counts={t:0 for t in CANON_WEAPON_TYPES}
+ for w in out:counts[w["type"]]=counts.get(w["type"],0)+1
+ print("weapon types",json.dumps(counts,ensure_ascii=False))
+ missing=[t for t in CANON_WEAPON_TYPES if counts.get(t,0)==0]
+ if missing:raise SystemExit("missing weapon types: "+", ".join(missing))
  return out
 
 def main():
@@ -257,6 +231,6 @@ def main():
  skills=fetch_skills();print("skills",len(skills));print("Fetching armors...");armors=fetch_armors(skills);print("armors",len(armors));print("Fetching weapons...");weapons=fetch_weapons(skills);print("weapons",len(weapons))
  custom={"id":"custom","name":"カスタム武器","type":"任意","grade":"手入力","attack":1764,"affinity":0,"element":"無属性","elementValue":0,"skills":{},"monster":"","source":""}
  data={"version":dt.datetime.now(dt.timezone(dt.timedelta(hours=9))).strftime("%Y-%m-%dT%H%M%S+09-auto"),"generatedAt":dt.datetime.now(dt.timezone.utc).isoformat(),"sourceNote":f"自動生成: official weapons {len(weapons)} / wiki-db armors {len(armors)} / skills {len(skills)}","elements":ELEMENTS,"weapons":[custom]+weapons,"skills":skills,"armors":armors,"materialsCatalog":{}}
- if len(skills)<80 or len(armors)<100 or len(weapons)<20:raise SystemExit(f"coverage too low: skills={len(skills)} armors={len(armors)} weapons={len(weapons)}")
+ if len(skills)<80 or len(armors)<100 or len(weapons)<100:raise SystemExit(f"coverage too low: skills={len(skills)} armors={len(armors)} weapons={len(weapons)}")
  out=Path(args.output);out.parent.mkdir(parents=True,exist_ok=True);out.write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding="utf-8");print("wrote",out)
 if __name__=="__main__":main()
