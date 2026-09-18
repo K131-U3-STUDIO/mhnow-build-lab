@@ -1,0 +1,15 @@
+{
+  "release": "v06-rc2-83bf5b98d8b23c40",
+  "schemaVersion": 6,
+  "assets": {
+    "index.html": "4464cedec1d5fe052c18e18cbee96950c7add5df37099b4ac2d4c8e003572cb0",
+    "manifest.webmanifest": "a779fccff67abef6926c0f557352e2dd9d4a2c41a01c9857c8820509f7e6fb5f",
+    "data/mhn_master.json": "dfb2e4067d50f956639991274ddf5f710afbce6f058ce1e9c80ee221f1b60693",
+    "icons/icon-192.png": "b60767894e83bb97b88138fda8f84b857d99ade7fc32f78a4346fb93dcc19145",
+    "icons/icon-512.png": "42c85a596a5ff574b906d1668e787467d7dcea00998e69373ac0d9a20abbbd6e",
+    "icons/apple-touch-icon.png": "0d0789e624cdcc036f59d58b6b0aa9176e9fbec23ce00d7f99a62497726b5ac2",
+    "assets/engine.5a3ee22671286ad0.js": "5a3ee22671286ad0f491c165ce6875ab15e90815137d51efaa885ad5e848fbef",
+    "assets/search-worker.c3b5933aa3f892b5.js": "c3b5933aa3f892b52556b3a05635268b6ccef0658116574718c77651e89da732",
+    "assets/app.6e9f6a4de17c82a9.js": "6e9f6a4de17c82a9b6c36d49f5538d2c91a50c9c3f6095c40b927d6fbf2687d5"
+  }
+}

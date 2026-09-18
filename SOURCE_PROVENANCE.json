@@ -1,0 +1,85 @@
+{
+  "canonicalRepository": "https://github.com/K131-U3-STUDIO/mhnow-build-lab",
+  "canonicalCommit": "6d6fc9b5e1b8a767e862455b0913f24838532eba",
+  "patchSHA256": "55c2d16f390a96f18fd4c87cef2e0baec11718d4e2ab7ea2737fab51b81cf0bb",
+  "masterSHA256": "dfb2e4067d50f956639991274ddf5f710afbce6f058ce1e9c80ee221f1b60693",
+  "masterGeneratedAt": "2026-09-18T04:02:15.106092+00:00",
+  "published": false,
+  "release": "0.6-RC2",
+  "inputRCFile": "MHNow_Build_Lab_v0.6_RC.zip",
+  "inputRCSHA256": "d7de43ce395e626d560f4e6c86f34cd1bab90e2435fc06934d3cf389e1a55e47",
+  "readOnlyCanonicalCheck": {
+    "checkedAt": "2026-09-18",
+    "head": "6d6fc9b5e1b8a767e862455b0913f24838532eba",
+    "matchesRCBaseline": true,
+    "changesMerged": false
+  },
+  "codeBase": "verified input RC zip; not a fresh redesign",
+  "reviewInputs": {
+    "MHNow_v0.6_RC_REVIEW(1).md": "efb72d6aebb3c15d00a8722d27d949a2e9462a978b21cd118c17ba920c36c932",
+    "MHNow_v0.6_RC_REVIEW_PACKAGE(1).zip": "7ce4145d91454671c3fc940dd1f0f2a6750041bb96ded30e60444a8afd747be0",
+    "MHNow_v0.6_RC2_WORK_PROMPT(1).txt": "69efca5072b6724c1af0c29fe83d9b9e80a50ba9247cfb9c27e2c2725c371da9"
+  },
+  "githubWrites": false,
+  "previewCreated": false,
+  "verificationSources": [
+    {
+      "url": "https://monsterhunternow.com/ja/skills/powerhouse",
+      "retrievedAt": "2026-09-18",
+      "confidence": "official-page",
+      "use": "individual effect and activation dependency"
+    },
+    {
+      "url": "https://monsterhunternow.com/ja/skills/disable_perfect_evade",
+      "retrievedAt": "2026-09-18",
+      "confidence": "official-page",
+      "use": "individual effect and activation dependency"
+    },
+    {
+      "url": "https://monsterhunternow.com/ja/skills/burst_dodger",
+      "retrievedAt": "2026-09-18",
+      "confidence": "official-page",
+      "use": "individual effect and activation dependency"
+    },
+    {
+      "url": "https://niantic.helpshift.com/hc/ja/39-monster-hunter-now/faq/3942-driftsmelting/",
+      "retrievedAt": "2026-09-18",
+      "confidence": "official-help",
+      "use": "20 records, armor ownership, multiple slots; same-name distinction unspecified"
+    },
+    {
+      "url": "https://monsterhunternow.com/ja/news/driftsmelting-may2024",
+      "retrievedAt": "2026-09-18",
+      "confidence": "historical-official",
+      "use": "no duplicate equipped skill; identity wording ambiguous, old 10-record limit superseded"
+    },
+    {
+      "url": "https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site",
+      "retrievedAt": "2026-09-18",
+      "confidence": "official-docs",
+      "use": "GITHUB_TOKEN commits do not trigger branch-source Pages build"
+    }
+  ],
+  "artifactRelease": "0.6-RC2.1",
+  "applicationRelease": "0.6-RC2",
+  "rc21Base": {
+    "file": "MHNow_Build_Lab_v0.6_RC2.zip",
+    "sha256": "0fc911a198ec0fdc1f993748786c76851c6e1e87bfa62a459453c3c3c9c9c510",
+    "libraryFileId": "libfile_2afc72b3222c8191ad16c6dc0dbf0c3c"
+  },
+  "rc21Changes": [
+    "tests/sw-release.test.cjs: serialized memory Cache mock and contract assertions",
+    "TEST_REPORT.md append; change log; provenance; evidence; checksums"
+  ],
+  "rc21Validation": {
+    "python": "3.12.14",
+    "node": [
+      "22.16.0",
+      "24.19.0"
+    ],
+    "passedPerNode": 83,
+    "runtimeChanged": false,
+    "githubChanged": false,
+    "pagesChanged": false
+  }
+}

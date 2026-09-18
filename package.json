@@ -1,0 +1,13 @@
+{
+  "name": "mhnow-build-lab-rc2",
+  "version": "0.6.0-rc.2",
+  "private": true,
+  "scripts": {
+    "build": "python tools/build_engine.py && python tools/build_model_coverage.py && python tools/build_release.py",
+    "test": "node tests/engine.test.cjs && node tests/rc2.test.cjs && node tests/sw-release.test.cjs",
+    "test:ui": "node tests/ui.test.cjs && node tests/rc2-ui.test.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}
