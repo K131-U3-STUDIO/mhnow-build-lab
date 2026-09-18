@@ -1,0 +1,125 @@
+{
+  "python": "3.12.14",
+  "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
+  "before": {
+    "command": [
+      "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/npm",
+      "test"
+    ],
+    "exitCode": 1,
+    "elapsedSeconds": 0.549,
+    "log": "tests/rc21_evidence/before-node22-npm-test.txt"
+  },
+  "runs": [
+    {
+      "label": "node22",
+      "node": "v22.16.0",
+      "npm": "11.9.0",
+      "python": "3.12.14",
+      "playwright": "1.62.1",
+      "browser": "Chromium 153.0.8010.0",
+      "steps": [
+        {
+          "command": [
+            "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests",
+            "-p",
+            "test_*.py",
+            "-v"
+          ],
+          "exitCode": 0,
+          "elapsedSeconds": 0.396,
+          "log": "tests/rc21_evidence/node22/python.txt"
+        },
+        {
+          "command": [
+            "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/npm",
+            "test"
+          ],
+          "exitCode": 0,
+          "elapsedSeconds": 0.518,
+          "log": "tests/rc21_evidence/node22/npm-test.txt"
+        },
+        {
+          "command": [
+            "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/npm",
+            "run",
+            "test:ui"
+          ],
+          "exitCode": 0,
+          "elapsedSeconds": 36.209,
+          "log": "tests/rc21_evidence/node22/npm-test-ui.txt"
+        }
+      ],
+      "scenarioCounts": {
+        "existingEngine": 22,
+        "existingPython": 14,
+        "existingUI": 15,
+        "rc2Functions": 11,
+        "rc2SW": 8,
+        "rc2Python": 8,
+        "rc2UI": 5
+      },
+      "totalPassed": 83
+    },
+    {
+      "label": "node24",
+      "node": "v24.19.0",
+      "npm": "11.9.0",
+      "python": "3.12.14",
+      "playwright": "1.62.1",
+      "browser": "Chromium 153.0.8010.0",
+      "steps": [
+        {
+          "command": [
+            "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests",
+            "-p",
+            "test_*.py",
+            "-v"
+          ],
+          "exitCode": 0,
+          "elapsedSeconds": 0.351,
+          "log": "tests/rc21_evidence/node24/python.txt"
+        },
+        {
+          "command": [
+            "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/npm",
+            "test"
+          ],
+          "exitCode": 0,
+          "elapsedSeconds": 0.646,
+          "log": "tests/rc21_evidence/node24/npm-test.txt"
+        },
+        {
+          "command": [
+            "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/npm",
+            "run",
+            "test:ui"
+          ],
+          "exitCode": 0,
+          "elapsedSeconds": 36.03,
+          "log": "tests/rc21_evidence/node24/npm-test-ui.txt"
+        }
+      ],
+      "scenarioCounts": {
+        "existingEngine": 22,
+        "existingPython": 14,
+        "existingUI": 15,
+        "rc2Functions": 11,
+        "rc2SW": 8,
+        "rc2Python": 8,
+        "rc2UI": 5
+      },
+      "totalPassed": 83
+    }
+  ]
+}
