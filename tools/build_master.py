@@ -247,9 +247,12 @@ def discover_weapon_slugs(output_path):
     m=re.search(r"/(?:ja/|en/)?weapons/([A-Za-z0-9_\-]+)",urlparse(h).path,re.I)
     if m:slugs.add(m.group(1))
   except Exception as e:print(f"weapon index discovery warn {index}: {e}",file=sys.stderr)
- # Only keep slugs whose suffix identifies a real weapon type.
- slugs={s for s in slugs if _canonical_type_from_slug(s)}
+ # Do NOT discard slugs just because the URL suffix does not encode a weapon type.
+ # The official detail page itself is the authority: it exposes a Japanese "武器種" field.
+ # Older/current route shapes are allowed here and classified after fetching the detail page.
+ slugs={s for s in slugs if s and s.lower() not in {"weapons","weapon"}}
  print("weapon slugs discovered",len(slugs))
+ print("weapon slug sample",sorted(slugs)[:12])
  return sorted(slugs),old_by_slug
 
 def fetch_weapons(skills,output_path):
@@ -276,6 +279,8 @@ def fetch_weapons(skills,output_path):
    if "関連するモンスター" not in lines:raise ValueError("not a weapon detail page")
    page_type=nearest_value_before(lines,"関連するモンスター",set(CANON_WEAPON_TYPES))
    if page_type in CANON_WEAPON_TYPES:typ=page_type
+   if typ not in CANON_WEAPON_TYPES:
+    raise ValueError("weapon type could not be classified from detail page")
    name=pick_name(sp,slug);monster=parse_monster(lines)
    best=None
    for table in sp.find_all("table"):
@@ -302,10 +307,11 @@ def fetch_weapons(skills,output_path):
    return {"id":"weapon_"+slug,"name":name,"type":typ,"grade":"G10.5","attack":int(attack),"affinity":aff,
            "element":el,"elementValue":int(elemval),"skills":sd,"monster":monster,"source":url}
   except Exception as e:
-   # Preserve the last successful record instead of dropping a weapon when one detail page is temporarily unavailable.
+   # Preserve a prior record only when its weapon type is already one of the 14 canonical types.
+   # This prevents legacy misclassified values such as "防具" from leaking back into the new master.
    old=old_by_slug.get(slug)
-   if old:
-    x=dict(old);x["type"]=typ or x.get("type","");x["source"]=url
+   if old and old.get("type") in CANON_WEAPON_TYPES:
+    x=dict(old);x["source"]=url
     print(f"weapon fallback old {slug}: {e}",file=sys.stderr);return x
    print(f"weapon warn {url}: {e}",file=sys.stderr);return None
 
