@@ -1,0 +1,80 @@
+{
+  "results": [
+    {
+      "name": "startup / 721 weapons / 366 armors",
+      "ms": 208,
+      "status": "PASS"
+    },
+    {
+      "name": "bounded weapon list + 14 type filter + attribute + source search",
+      "ms": 340,
+      "status": "PASS"
+    },
+    {
+      "name": "skill checkbox / partial filter / level / selected only / clear",
+      "ms": 529,
+      "status": "PASS"
+    },
+    {
+      "name": "drift manager register / edit / ownership",
+      "ms": 436,
+      "status": "PASS"
+    },
+    {
+      "name": "no-drift Worker search + result weapon snapshot + save + compare",
+      "ms": 5398,
+      "status": "PASS"
+    },
+    {
+      "name": "backup roundtrip retains owned / mysets / preferences; malformed import atomic",
+      "ms": 289,
+      "status": "PASS"
+    },
+    {
+      "name": "materials show unknown quantities including weapon",
+      "ms": 62,
+      "status": "PASS"
+    },
+    {
+      "name": "exclusion persists",
+      "ms": 212,
+      "status": "PASS"
+    },
+    {
+      "name": "theory search cancel keeps UI responsive",
+      "ms": 253,
+      "status": "PASS"
+    },
+    {
+      "name": "owned drift search completes",
+      "ms": 6922,
+      "status": "PASS"
+    },
+    {
+      "name": "theory full Worker search",
+      "ms": 7154,
+      "status": "PASS"
+    },
+    {
+      "name": "requested skill UI search uses weapon skill",
+      "ms": 6516,
+      "status": "PASS"
+    },
+    {
+      "name": "drift delete",
+      "ms": 275,
+      "status": "PASS"
+    },
+    {
+      "name": "relative-path PWA / offline master / unrelated cache retained",
+      "ms": 161,
+      "status": "PASS"
+    },
+    {
+      "name": "820 / 390 viewport no horizontal overflow",
+      "ms": 406,
+      "status": "PASS"
+    }
+  ],
+  "errors": []
+}
