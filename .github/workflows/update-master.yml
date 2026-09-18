@@ -38,9 +38,8 @@ jobs:
       - name: Validate the exact artifact
         run: |
           python -m unittest discover -s tests -p 'test_*.py' -v
-          node tests/engine.test.cjs
+          npm test
           node tests/rc2.test.cjs
-          node tests/sw-release.test.cjs
           node tests/ui.test.cjs
           node tests/rc2-ui.test.cjs
       - name: Commit generated source (does not trigger Pages)

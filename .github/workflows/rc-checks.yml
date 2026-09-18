@@ -16,5 +16,5 @@ jobs:
       - run: pip install -r requirements.txt
       - run: python tools/build_engine.py
       - run: git diff --exit-code -- js/engine.js
-      - run: node --check js/app.js && node tests/engine.test.cjs
+      - run: node --check js/app.js && npm test
       - run: python -m unittest discover -s tests -p 'test_*.py' -v
