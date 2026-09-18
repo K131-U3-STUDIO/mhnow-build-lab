@@ -1,0 +1,27 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> mhnow-build-lab-rc2@0.6.0-rc.2 test:ui
+> node tests/ui.test.cjs && node tests/rc2-ui.test.cjs
+
+PASS startup / 721 weapons / 366 armors 208
+PASS bounded weapon list + 14 type filter + attribute + source search 340
+PASS skill checkbox / partial filter / level / selected only / clear 529
+PASS drift manager register / edit / ownership 436
+PASS no-drift Worker search + result weapon snapshot + save + compare 5398
+PASS backup roundtrip retains owned / mysets / preferences; malformed import atomic 289
+PASS materials show unknown quantities including weapon 62
+PASS exclusion persists 212
+PASS theory search cancel keeps UI responsive 253
+PASS owned drift search completes 6922
+PASS theory full Worker search 7154
+PASS requested skill UI search uses weapon skill 6516
+PASS drift delete 275
+PASS relative-path PWA / offline master / unrelated cache retained 161
+PASS 820 / 390 viewport no horizontal overflow 406
+[{"name":"startup / 721 weapons / 366 armors","ms":208,"status":"PASS"},{"name":"bounded weapon list + 14 type filter + attribute + source search","ms":340,"status":"PASS"},{"name":"skill checkbox / partial filter / level / selected only / clear","ms":529,"status":"PASS"},{"name":"drift manager register / edit / ownership","ms":436,"status":"PASS"},{"name":"no-drift Worker search + result weapon snapshot + save + compare","ms":5398,"status":"PASS"},{"name":"backup roundtrip retains owned / mysets / preferences; malformed import atomic","ms":289,"status":"PASS"},{"name":"materials show unknown quantities including weapon","ms":62,"status":"PASS"},{"name":"exclusion persists","ms":212,"status":"PASS"},{"name":"theory search cancel keeps UI responsive","ms":253,"status":"PASS"},{"name":"owned drift search completes","ms":6922,"status":"PASS"},{"name":"theory full Worker search","ms":7154,"status":"PASS"},{"name":"requested skill UI search uses weapon skill","ms":6516,"status":"PASS"},{"name":"drift delete","ms":275,"status":"PASS"},{"name":"relative-path PWA / offline master / unrelated cache retained","ms":161,"status":"PASS"},{"name":"820 / 390 viewport no horizontal overflow","ms":406,"status":"PASS"}]
+PASS B01 actual UI malformed nested import is atomic 339
+PASS B02 actual Worker results retain start conditions while UI changes 5160
+PASS B03 quota failure visible; pending set exports then retries 197
+PASS B01 corrupt startup recovery keeps bytes and exports original 166
+PASS B01 valid restore recovers UI and quarantines corrupt original 109
+[{"name":"B01 actual UI malformed nested import is atomic","ms":339,"status":"PASS"},{"name":"B02 actual Worker results retain start conditions while UI changes","ms":5160,"status":"PASS"},{"name":"B03 quota failure visible; pending set exports then retries","ms":197,"status":"PASS"},{"name":"B01 corrupt startup recovery keeps bytes and exports original","ms":166,"status":"PASS"},{"name":"B01 valid restore recovers UI and quarantines corrupt original","ms":109,"status":"PASS"}]
