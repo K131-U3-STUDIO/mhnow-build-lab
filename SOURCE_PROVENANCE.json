@@ -5,7 +5,7 @@
   "masterSHA256": "dfb2e4067d50f956639991274ddf5f710afbce6f058ce1e9c80ee221f1b60693",
   "masterGeneratedAt": "2026-09-18T04:02:15.106092+00:00",
   "published": false,
-  "release": "0.6-RC2",
+  "release": "0.6.1",
   "inputRCFile": "MHNow_Build_Lab_v0.6_RC.zip",
   "inputRCSHA256": "d7de43ce395e626d560f4e6c86f34cd1bab90e2435fc06934d3cf389e1a55e47",
   "readOnlyCanonicalCheck": {
@@ -60,8 +60,8 @@
       "use": "GITHUB_TOKEN commits do not trigger branch-source Pages build"
     }
   ],
-  "artifactRelease": "0.6-RC2.1",
-  "applicationRelease": "0.6-RC2",
+  "artifactRelease": "0.6.1",
+  "applicationRelease": "0.6.1",
   "rc21Base": {
     "file": "MHNow_Build_Lab_v0.6_RC2.zip",
     "sha256": "0fc911a198ec0fdc1f993748786c76851c6e1e87bfa62a459453c3c3c9c9c510",
@@ -81,5 +81,21 @@
     "runtimeChanged": false,
     "githubChanged": false,
     "pagesChanged": false
+  },
+  "pagesChanged": false,
+  "v061Changes": [
+    "skill search supports required / excluded / maximum level constraints",
+    "constraints apply to final weapon + armor + driftsmelting skill levels",
+    "beam search prunes states that exceed skill maximums",
+    "snapshot/backup/searchConditions persist skillLimits with schema v6 compatibility",
+    "RC checks and publish workflow run the new non-UI constraint tests"
+  ],
+  "v061Validation": {
+    "python": "3.12",
+    "node": "22.16.0",
+    "nonUiPassed": 73,
+    "uiPlanned": 21,
+    "uiExecutedLocally": false,
+    "uiReason": "Playwright package unavailable in local validation container; GitHub Actions workflow installs Playwright and executes both UI suites"
   }
 }

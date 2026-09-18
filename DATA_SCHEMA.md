@@ -1,4 +1,4 @@
-# Data schema v6 / RC2 writerRevision
+# Data schema v6 / v0.6.1 writerRevision
 
 ## Master
 
@@ -26,7 +26,7 @@ driftstone: `name, skills[{skill,level}], source, provenance`。提供中の石�
 
 ## User backup / snapshot
 
-`app:"MH Now Build Lab", schemaVersion:6, writerRevision:"0.6-RC2", version, exportedAt, excluded[], mysets[], requirements{}, manualDrift{}, ownedDrift{}, armorSettings{}, preferences{}`。
+`app:"MH Now Build Lab", schemaVersion:6, writerRevision:"0.6.1", version, exportedAt, excluded[], mysets[], requirements{}, skillLimits{}, manualDrift{}, ownedDrift{}, armorSettings{}, preferences{}`。
 永続正本: localStorage `mhnbl_v06_snapshot`。初回は既存v02/v05キーを読み、以後v6を優先。旧キーは移行用の読取専用アーカイブとして保持し、書き戻しません。正本はsnapshotの1キーだけです。
 バックアップにschemaVersionがない旧版はv6へ移行。未来の版、未知形式、重複結果ID、21件以上の漂移、複数bonus種、無効数値は拒否。
 
@@ -45,7 +45,7 @@ driftstone: `name, skills[{skill,level}], source, provenance`。提供中の石�
 
 `id,name,weapon,parts[],skills,drift,driftByArmor,driftStats,score,modelVersion,searchConditions,rawExpected,elemExpected,affinity,slots,created`。
 武器、防具、漂移結果は保存時snapshot。旧マイセットのスコアは再計算せず旧モデルとして表示。
-searchConditionsには開始時のrequirements、manualDrift、ownedDrift、driftPool、excluded、armorSettings、masterVersion、masterSchemaVersion、weapon snapshot、values（入力値/稼働率）、weaponId、skillCategoryを含めます。全体をdeep clone/freezeし、計算送信元と保存元を一致させます。
+searchConditionsには開始時のrequirements、skillLimits、manualDrift、ownedDrift、driftPool、excluded、armorSettings、masterVersion、masterSchemaVersion、weapon snapshot、values（入力値/稼働率）、weaponId、skillCategoryを含めます。全体をdeep clone/freezeし、計算送信元と保存元を一致させます。
 「武器条件を読込」は現在masterに同じ武器IDがある場合に入力条件を復元します。未知IDは保持・表示し、読込を止めて対応masterを案内します。旧構成を現在モデルの最適結果とみなしません。
 
 ## Materials extension
@@ -62,3 +62,11 @@ legacy schemaなしはv6へ移行し任意mapを補完。欠落・未知装備ID
 失敗時のメモリー変更は `pendingSave` として未保存表示、再試行/JSON退避可能。再読込で未保存メモリーは失われるため更新SWの切替を止めます。snapshot破損起動は `recoveryLocked` で自動書込み停止、原本bytesをJSON退避可能。正常復元時は `mhnbl_v06_snapshot_quarantine_<timestamp>` に原本を隔離後、新snapshotを一回書込み。隔離に失敗すれば復元しません。読み取り失敗した旧キーも消しません。
 
 同名別IDの漂移結果はRCのidentity modelを維持。公式FAQ/旧告知だけでは同名別結果の同時装着可否を断定できないため、IPAD_ACCEPTANCEのゲーム内確認を必須としています。
+
+## Skill constraints (v0.6.1)
+
+- `requirements:{skill:minLevel}` は最低Lv条件。
+- `skillLimits:{skill:maxLevel}` は最終Lv上限。`0` は完全除外。
+- 判定対象は武器＋防具＋有効な漂移錬成を合算した最終スキルLv。
+- 同一スキルを requirements と skillLimits に同時指定するバックアップは拒否します。
+- schemaVersion は6のまま、skillLimits欠落時は `{}` として旧バックアップを互換読込します。
