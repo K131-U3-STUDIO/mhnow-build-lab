@@ -1,0 +1,4 @@
+JavaScript syntax: app.js, engine.js, search-worker.js, service-worker.js PASS
+Generated engine parity PASS
+Canonical git worktree unchanged PASS
+No commit/push/deploy performed

@@ -1,0 +1,19 @@
+test_discovery_routes (test_pipeline.Pipeline.test_discovery_routes) ... ok
+test_drift_coverage (test_pipeline.Pipeline.test_drift_coverage) ... ok
+test_duplicate_ids (test_pipeline.Pipeline.test_duplicate_ids) ... ok
+test_equipment_misclassification (test_pipeline.Pipeline.test_equipment_misclassification) ... ok
+test_failed_publish_preserves_bytes (test_pipeline.Pipeline.test_failed_publish_preserves_bytes) ... ok
+test_full_coverage (test_pipeline.Pipeline.test_full_coverage) ... ok
+test_no_invented_material_quantities (test_pipeline.Pipeline.test_no_invented_material_quantities) ... ok
+test_official_effect_values (test_pipeline.Pipeline.test_official_effect_values) ... ok
+test_official_payload_requires_structure (test_pipeline.Pipeline.test_official_payload_requires_structure) ... ok
+test_official_structured_parser_fixture (test_pipeline.Pipeline.test_official_structured_parser_fixture) ... ok
+test_relative_coverage (test_pipeline.Pipeline.test_relative_coverage) ... ok
+test_rowspan (test_pipeline.Pipeline.test_rowspan) ... ok
+test_slot_shape (test_pipeline.Pipeline.test_slot_shape) ... ok
+test_weapon_skill_unlocks (test_pipeline.Pipeline.test_weapon_skill_unlocks) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.202s
+
+OK
