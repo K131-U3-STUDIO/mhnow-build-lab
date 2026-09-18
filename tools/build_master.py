@@ -6,7 +6,7 @@ Designed for GitHub Actions. It is intentionally rate-limited and records source
 from __future__ import annotations
 import argparse, concurrent.futures, datetime as dt, json, re, sys, time
 from pathlib import Path
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, unquote
 import requests
 from bs4 import BeautifulSoup
 
@@ -14,7 +14,8 @@ UA="MHNow-Build-Lab/0.4 (+personal noncommercial data refresh; GitHub Pages)"
 HEADERS={"User-Agent":UA,"Accept-Language":"ja-JP,ja;q=0.9,en;q=0.5"}
 SKILL_INDEX="https://mhnow.wiki-db.com/skills/"
 ARMOR_INDEX="https://mhnow.wiki-db.com/armors/"
-WEAPON_INDEX="https://monsterhunternow.com/ja/weapons"
+WEAPON_INDEX="https://monsterhunternow.com/weapons"
+WEAPON_JA_ROOT="https://monsterhunternow.com/ja/weapons/"
 ELEMENTS=["無属性","火","水","雷","氷","龍","毒","麻痺","睡眠","爆破"]
 
 ALIASES={"会心撃〖属性〗":"会心撃【属性】","団結力〖秋のかぼちゃ狩り〗":"団結力【秋のかぼちゃ狩り】","SPゲージ加速〖ジャスト回避〗":"SPゲージ加速【ジャスト回避】","闇討ち〖状態異常〗":"闇討ち【状態異常】","グループハント強化〖防御〗":"グループハント強化【防御】","グループハント強化〖攻撃〗":"グループハント強化【攻撃】","破壊王〖SPスキル〗":"破壊王【SPスキル】","追い打ち〖毒〗":"追い打ち【毒】","追い打ち〖麻痺〗":"追い打ち【麻痺】","ジャスト巧撃〖状態異常〗":"ジャスト巧撃【状態異常】","ジャスト巧撃〖持続〗":"ジャスト巧撃【持続】","絶対回避〖SP〗":"絶対回避【SP】","攻撃増強〖会心〗":"攻撃増強【会心】","破壊王〖尻尾〗":"破壊王【尻尾】","属性攻撃増強〖SP〗":"属性攻撃増強【SP】","SPゲージ加速〖ガード〗":"SPゲージ加速【ガード】","SPゲージ加速〖受け流し〗":"SPゲージ加速【受け流し】"}
@@ -127,45 +128,127 @@ def element_from(s):
 def num(s,default=0):
  m=re.search(r"-?\d+(?:\.\d+)?",s.replace(",",""));return float(m.group()) if m else default
 
-def fetch_weapons(skills):
- html=get(WEAPON_INDEX,60);soup=BeautifulSoup(html,"html.parser");urls=set()
- for a in soup.find_all("a",href=True):
-  h=urljoin(WEAPON_INDEX,a["href"])
-  if re.search(r"/ja/weapons/[^/?#]+/?$",h) and not h.rstrip('/').endswith('/weapons'):urls.add(h)
- if not urls:
-  for h in re.findall(r'https?://monsterhunternow\.com/ja/weapons/[A-Za-z0-9_\-]+|/ja/weapons/[A-Za-z0-9_\-]+',html):urls.add(urljoin(WEAPON_INDEX,h))
- skill_names=sorted(skills,key=len,reverse=True)
- def one(url):
+def _weapon_slug(url):
+ path=urlparse(url).path
+ m=re.search(r"/(?:ja/|en/)?weapons/([^/?#]+)/?$",path,re.I)
+ if not m:return None
+ slug=m.group(1).strip()
+ if not slug or slug.lower() in {"weapons","weapon"}:return None
+ return slug
+
+def _extract_weapon_slugs(text):
+ """Extract weapon-family slugs from HTML/JSON/script text."""
+ if not text:return set()
+ raw=unquote(text.replace(r"\/","/"))
+ out=set()
+ # Normal/JSON-embedded URLs and relative routes.
+ for m in re.finditer(r"/(?:ja/|en/)?weapons/([A-Za-z0-9_\-]+)",raw,re.I):
+  slug=m.group(1)
+  if slug.lower() not in {"weapons","weapon"}:out.add(slug)
+ # Next.js payload fallback: weapon slugs commonly end in a weapon-type token.
+ suffix=(r"swordshield|sword_and_shield|dualblades|dual_blades|greatsword|great_sword|"
+         r"longsword|long_sword|hammer|huntinghorn|hunting_horn|lance|gunlance|gun_lance|"
+         r"switchaxe|switch_axe|chargeblade|charge_blade|insectglaive|insect_glaive|"
+         r"lightbowgun|light_bowgun|heavybowgun|heavy_bowgun|bow")
+ for m in re.finditer(rf"\b([a-z0-9][a-z0-9_\-]*_(?:{suffix}))\b",raw,re.I):out.add(m.group(1))
+ return out
+
+def _discover_from_sitemaps():
+ """Best-effort sitemap discovery. Handles sitemap indexes one level deep."""
+ slugs=set();todo=[];seen=set()
+ for u in ["https://monsterhunternow.com/sitemap.xml","https://monsterhunternow.com/sitemap_index.xml"]:
   try:
-   sp=BeautifulSoup(get(url,40),"html.parser");h1=sp.find("h1");name=norm(h1.get_text(" ",strip=True) if h1 else url.split('/')[-1]);lines=[norm(x) for x in sp.stripped_strings];typ=parse_type(lines,"武器種");monster=parse_type(lines,"関連するモンスター")
-   best=None
+   body=get(u,30)
+   todo.append((u,body))
+  except Exception:
+   pass
+ try:
+  robots=get("https://monsterhunternow.com/robots.txt",20)
+  for u in re.findall(r"(?im)^\s*Sitemap:\s*(https?://\S+)",robots):
+   if u not in [x[0] for x in todo]:
+    try:todo.append((u,get(u,30)))
+    except Exception:pass
+ except Exception:
+  pass
+ for _,body in list(todo):
+  slugs|=_extract_weapon_slugs(body)
+  for loc in re.findall(r"<loc>\s*([^<]+\.xml(?:\?[^<]*)?)\s*</loc>",body,re.I):
+   loc=loc.replace("&amp;","&")
+   if loc in seen:continue
+   seen.add(loc)
+   try:slugs|=_extract_weapon_slugs(get(loc,30))
+   except Exception:pass
+ return slugs
+
+def discover_weapon_slugs():
+ """Discover weapon detail slugs without depending on the Japanese index DOM."""
+ slugs=_discover_from_sitemaps()
+ for index in ["https://monsterhunternow.com/weapons","https://monsterhunternow.com/en/weapons","https://monsterhunternow.com/ja/weapons"]:
+  try:
+   body=get(index,60);sp=BeautifulSoup(body,"html.parser")
+   slugs|=_extract_weapon_slugs(body)
+   for a in sp.find_all("a",href=True):
+    slug=_weapon_slug(urljoin(index,a["href"]))
+    if slug:slugs.add(slug)
+  except Exception as e:
+   print(f"weapon discovery warn {index}: {e}",file=sys.stderr)
+ print("weapon slugs discovered",len(slugs))
+ return sorted(slugs)
+
+def fetch_weapons(skills):
+ slugs=discover_weapon_slugs()
+ if len(slugs)<20:
+  print("weapon discovery sample",slugs[:20],file=sys.stderr)
+  return []
+ skill_names=sorted(skills,key=len,reverse=True)
+ def one(slug):
+  # Discovery is done from the public English/global index, but detail parsing uses
+  # Japanese pages so weapon type, monster and equipment-skill names match our UI.
+  url=urljoin(WEAPON_JA_ROOT,slug)
+  try:
+   sp=BeautifulSoup(get(url,40),"html.parser");h1=sp.find("h1");family_name=norm(h1.get_text(" ",strip=True) if h1 else slug);lines=[norm(x) for x in sp.stripped_strings];typ=parse_type(lines,"武器種");monster=parse_type(lines,"関連するモンスター")
+   best=None;best_attack=-1
    for table in sp.find_all("table"):
     mat=table_matrix(table)
     if not mat:continue
     hdr=mat[0]
     if not any("攻撃力" in x for x in hdr):continue
+    last_aff=0.0;last_elem_text="";last_elem_val=0;last_name=family_name
     for row in mat[1:]:
-     text=" | ".join(row);attack=0;aff=0;elemval=0
-     # Column-based when headers align, otherwise numeric fallback.
+     if not row:continue
+     text=" | ".join(row);attack=0;aff=None;elemval=None;elemtext=""
      for j,h in enumerate(hdr):
       if j>=len(row):continue
-      if "攻撃力" in h:attack=int(num(row[j],0))
-      elif "会心率" in h:aff=float(num(row[j],0))
-      elif "属性" in h:elemval=int(num(row[j],0))
-     if attack>0:best=(row,text,attack,aff,elemval)
+      v=row[j]
+      if "名前" in h and v and not re.fullmatch(r"10\s*Lv\.?\s*5",v,re.I):last_name=norm(v)
+      elif "攻撃力" in h:attack=int(num(v,0))
+      elif "会心率" in h:
+       if "%" in v or re.search(r"-?\d",v):aff=float(num(v,last_aff))
+      elif "属性" in h:
+       elemtext=v
+       if "なし" in v or "None" in v:elemval=0
+       elif re.search(r"\d",v):elemval=int(num(v,last_elem_val))
+     if aff is not None:last_aff=aff
+     if elemtext:
+      last_elem_text=elemtext
+      if elemval is not None:last_elem_val=elemval
+     if attack>best_attack:
+      best_attack=attack
+      best=(last_name,text,attack,last_aff,last_elem_val,last_elem_text)
    if not best:return None
-   row,text,attack,aff,elemval=best;el=element_from(text)
+   final_name,text,attack,aff,elemval,elemtext=best
+   el=element_from((elemtext or "")+" "+text)
    if elemval<=0:el="無属性";elemval=0
    sd={};page_text=sp.get_text(" ",strip=True)
    for k in skill_names:
-    vals=[int(x) for x in re.findall(re.escape(k).replace("【","[【〖]").replace("】","[】〗]")+r"\s*Lv\s*(\d+)",page_text)]
+    pat=re.escape(k).replace("【","[【〖]").replace("】","[】〗]")+r"\s*Lv\.?\s*(\d+)"
+    vals=[int(x) for x in re.findall(pat,page_text)]
     if vals:sd[k]=max(vals)
-   slug=url.rstrip('/').split('/')[-1]
-   return {"id":"weapon_"+slug,"name":name,"type":typ or "不明","grade":"G10.5","attack":int(attack),"affinity":aff,"element":el,"elementValue":int(elemval),"skills":sd,"monster":monster,"source":url}
+   return {"id":"weapon_"+slug,"name":final_name or family_name,"type":typ or "不明","grade":"G10.5","attack":int(attack),"affinity":aff,"element":el,"elementValue":int(elemval),"skills":sd,"monster":monster,"source":url}
   except Exception as e:print(f"weapon warn {url}: {e}",file=sys.stderr);return None
  out=[]
- with concurrent.futures.ThreadPoolExecutor(max_workers=5) as ex:
-  for x in ex.map(one,sorted(urls)):
+ with concurrent.futures.ThreadPoolExecutor(max_workers=8) as ex:
+  for x in ex.map(one,slugs):
    if x:out.append(x)
  return out
 
