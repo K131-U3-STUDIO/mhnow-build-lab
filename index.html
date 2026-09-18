@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512.png">
-<title>MH Now Build Lab v0.4 PWA</title>
+<title>MH Now Build Lab v0.4.3 PWA</title>
 <style>
 :root{
  --bg:#0a0f15;--panel:#121923;--panel2:#17212d;--line:#293747;--text:#edf3f8;--muted:#98a8b8;
@@ -78,7 +78,7 @@ padding:8px 0;border-bottom:1px solid #263544}.slot:last-child{border-bottom:0}.
 @media(max-width:620px){.app{padding:9px}.header-actions .textbtn{display:none}.grid2,.grid3{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.result{grid-template-columns:44px minmax(0,1fr)}
 .score{grid-column:2;text-align:left}.req-add{grid-template-columns:1fr 58px}.req-add button{grid-column:1/-1}.drift-pool{grid-template-columns:1fr}.searchbox{grid-template-columns:1fr}}
 
-/* v0.4 PWA / iOS */
+/* v0.4.3 PWA / iOS */
 html,body{min-height:100%;min-height:100dvh;overscroll-behavior-y:none}
 body{-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;touch-action:manipulation}
 .app{padding-top:max(16px,env(safe-area-inset-top));padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));padding-bottom:max(16px,env(safe-area-inset-bottom))}
@@ -120,7 +120,7 @@ button,.tab,.bottom-tab{-webkit-user-select:none;user-select:none}
 <body>
 <div class="app">
 <header>
- <div class="brand"><div class="logo">MH</div><div><h1>MH Now Build Lab <span class="badge gold">v0.4 PWA</span></h1>
+ <div class="brand"><div class="logo">MH</div><div><h1>MH Now Build Lab <span class="badge gold">v0.4.3 PWA</span></h1>
  <div class="sub">火力ランキング / スキル検索 / 漂移錬成 / 比較 / 素材 / iOS PWA</div></div></div>
  <div class="header-actions">
   <span class="badge net online" id="networkBadge">オンライン</span>
@@ -275,7 +275,7 @@ button,.tab,.bottom-tab{-webkit-user-select:none;user-select:none}
  </div></div>
 </section>
 
-<footer>Monster Hunter Now は CAPCOM / Scopely 等の権利物です。本ツールは非公式の個人用シミュレータです。v0.4 PWA / 装備データ基準: 2026-09-18。ゲーム更新時は公式表示を優先してください。</footer>
+<footer>Monster Hunter Now は CAPCOM / Scopely 等の権利物です。本ツールは非公式の個人用シミュレータです。v0.4.3 PWA / 装備データ基準: 2026-09-18。ゲーム更新時は公式表示を優先してください。</footer>
 </div>
 
 
@@ -463,6 +463,21 @@ function calcFromSkills(skills,weapon){
 
 const SKILL_CATEGORY_LABELS={all:"すべて",attack:"攻撃",element:"属性",action:"アクション",defense:"防御・耐性",other:"その他"};
 let skillCategory="all";
+let skillCatalogReady=false;
+let armorCatalogReady=false;
+let weaponPickerIndexReady=false;
+let weaponPickerRows=[];
+let skillAvailabilityCache=new Map();
+const WEAPON_RENDER_LIMIT=120;
+
+function rebuildFastIndexes(){
+ weaponPickerRows=DB.weapons.filter(w=>w.id!=="custom").map(w=>({w,search:[w.name,w.type,w.element,w.monster,w.sourceMaterial].filter(Boolean).join(" ").toLowerCase()}));
+ skillAvailabilityCache=new Map();
+ for(const a of DB.armors)for(const k of Object.keys(a.skills||{})){const x=skillAvailabilityCache.get(k)||{a:0,w:0};x.a++;skillAvailabilityCache.set(k,x)}
+ for(const w of DB.weapons)for(const k of Object.keys(w.skills||{})){const x=skillAvailabilityCache.get(k)||{a:0,w:0};x.w++;skillAvailabilityCache.set(k,x)}
+ weaponPickerIndexReady=true;skillCatalogReady=false;armorCatalogReady=false;
+}
+function nextPaint(){return new Promise(resolve=>requestAnimationFrame(()=>resolve()));}
 
 function normalizeMaster(o){
  if(!o.elements)o.elements=BUILTIN.elements;
@@ -491,15 +506,16 @@ function updateWeaponSummary(w){
  $("weaponSummary").innerHTML=`<b>${esc(w.type||"任意")}｜${esc(w.name)}</b><div class="meta">${esc(w.element||"無属性")} ${w.elementValue||0} / 攻撃 ${w.attack||0} / 会心 ${w.affinity||0}%${w.monster?` / ${esc(w.monster)}`:""}</div>`;
 }
 function renderWeaponPicker(){
+ if(!weaponPickerIndexReady)rebuildFastIndexes();
  const q=($("weaponSearch")?.value||"").trim().toLowerCase(),ty=$("weaponTypeFilter")?.value||"",el=$("weaponElementFilter")?.value||"";
  const current=$("weaponSelect").value;
- let arr=DB.weapons.filter(w=>w.id!=="custom");
- if(ty)arr=arr.filter(w=>w.type===ty);if(el)arr=arr.filter(w=>w.element===el);
- if(q)arr=arr.filter(w=>[w.name,w.type,w.element,w.monster,w.sourceMaterial].filter(Boolean).join(" ").toLowerCase().includes(q));
- arr.sort((a,b)=>(a.type||"").localeCompare(b.type||"","ja")||(a.element||"").localeCompare(b.element||"","ja")||(a.name||"").localeCompare(b.name||"","ja"));
- $("weaponMatchCount").textContent=`${arr.length.toLocaleString()}件 / 全${Math.max(0,DB.weapons.length-1).toLocaleString()}件`;
- $("weaponPickerList").innerHTML=arr.length?arr.map(w=>`<button class="weapon-row ${w.id===current?"active":""}" data-id="${esc(w.id)}"><div><div class="wname">${esc(w.name)}</div><div class="wmeta">${esc(w.type||"")} / ${esc(w.element||"無属性")}${w.monster?` / ${esc(w.monster)}`:""}</div></div><div class="wstat">攻 ${w.attack||0}<br>会 ${w.affinity||0}% / 属 ${w.elementValue||0}</div></button>`).join(""):`<div class="empty">該当武器がありません。</div>`;
- document.querySelectorAll("#weaponPickerList .weapon-row").forEach(b=>b.onclick=()=>{const w=DB.weapons.find(x=>x.id===b.dataset.id);if(!w)return;$("weaponSelect").value=w.id;setWeapon(w);$("weaponModal").classList.remove("open")});
+ let rows=weaponPickerRows;
+ if(ty)rows=rows.filter(x=>x.w.type===ty);if(el)rows=rows.filter(x=>x.w.element===el);if(q)rows=rows.filter(x=>x.search.includes(q));
+ rows=[...rows].sort((a,b)=>(a.w.type||"").localeCompare(b.w.type||"","ja")||(a.w.element||"").localeCompare(b.w.element||"","ja")||(a.w.name||"").localeCompare(b.w.name||"","ja"));
+ const total=rows.length,shown=rows.slice(0,WEAPON_RENDER_LIMIT);
+ $("weaponMatchCount").textContent=total>WEAPON_RENDER_LIMIT?`${total.toLocaleString()}件 / 先頭${WEAPON_RENDER_LIMIT}件表示（絞り込み推奨）`:`${total.toLocaleString()}件 / 全${Math.max(0,DB.weapons.length-1).toLocaleString()}件`;
+ $("weaponPickerList").innerHTML=shown.length?shown.map(x=>{const w=x.w;return `<button class="weapon-row ${w.id===current?"active":""}" data-id="${esc(w.id)}"><div><div class="wname">${esc(w.name)}</div><div class="wmeta">${esc(w.type||"")} / ${esc(w.element||"無属性")}${w.monster?` / ${esc(w.monster)}`:""}</div></div><div class="wstat">攻 ${w.attack||0}<br>会 ${w.affinity||0}% / 属 ${w.elementValue||0}</div></button>`}).join(""):`<div class="empty">該当武器がありません。</div>`;
+ document.querySelectorAll("#weaponPickerList .weapon-row").forEach(b=>b.onclick=()=>{const w=DB.weapons.find(x=>x.id===b.dataset.id);if(!w)return;$("weaponSelect").innerHTML=`<option value="${esc(w.id)}">${esc(w.name)}</option>`;$("weaponSelect").value=w.id;setWeapon(w);$("weaponModal").classList.remove("open")});
 }
 function openWeaponPicker(){
  const types=[...new Set(DB.weapons.filter(w=>w.id!=="custom").map(w=>w.type).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"ja"));
@@ -508,9 +524,7 @@ function openWeaponPicker(){
  $("weaponElementFilter").innerHTML='<option value="">全属性</option>'+els.map(x=>`<option>${esc(x)}</option>`).join("");
  $("weaponSearch").value="";$("weaponModal").classList.add("open");renderWeaponPicker();
 }
-function skillAvailability(k){
- let a=0,w=0;for(const x of DB.armors)if((x.skills?.[k]||0)>0)a++;for(const x of DB.weapons)if((x.skills?.[k]||0)>0)w++;return {a,w};
-}
+function skillAvailability(k){return skillAvailabilityCache.get(k)||{a:0,w:0};}
 function renderSkillCategories(){
  $("skillCats").innerHTML=Object.entries(SKILL_CATEGORY_LABELS).map(([k,v])=>`<button class="skill-cat ${skillCategory===k?"active":""}" data-cat="${k}">${v}</button>`).join("");
  document.querySelectorAll("#skillCats .skill-cat").forEach(b=>b.onclick=()=>{skillCategory=b.dataset.cat;renderSkillCategories();renderSkillCatalog()});
@@ -693,7 +707,7 @@ function renderMysets(){
  document.querySelectorAll(".matSet").forEach(b=>b.onclick=()=>{currentMaterialSetId=b.dataset.id;showTab("materials");renderMaterialSetOptions();$("materialSet").value=currentMaterialSetId;calcMaterial()});
 }
 function loadSetWeapon(s){
- let id=DB.weapons.find(w=>w.id===s.weapon.id)?.id||"custom";$("weaponSelect").value=id;setWeapon(s.weapon);showTab("power");
+ let id=DB.weapons.find(w=>w.id===s.weapon.id)?.id||"custom";const w=DB.weapons.find(x=>x.id===id)||s.weapon;$("weaponSelect").innerHTML=`<option value="${esc(id)}">${esc(w.name||s.weapon.name)}</option>`;$("weaponSelect").value=id;setWeapon(s.weapon);showTab("power");
 }
 function renderMaterialSetOptions(){
  $("materialSet").innerHTML=mysets.length?mysets.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join(""):`<option value="">マイセットなし</option>`;
@@ -742,12 +756,15 @@ function persist(){
 }
 
 function setupSelectors(){
- DB=normalizeMaster(DB);$("elementSelect").innerHTML=DB.elements.map(x=>`<option>${esc(x)}</option>`).join("");
- $("weaponSelect").innerHTML=DB.weapons.map(w=>`<option value="${esc(w.id)}">${esc(w.type)}｜${esc(w.name)} (${esc(w.grade||"")})</option>`).join("");
- const skills=Object.keys(DB.skills).sort((a,b)=>a.localeCompare(b,"ja"));$("skillPicker").innerHTML=skills.map(k=>`<option>${esc(k)}</option>`).join("");
+ DB=normalizeMaster(DB);rebuildFastIndexes();$("elementSelect").innerHTML=DB.elements.map(x=>`<option>${esc(x)}</option>`).join("");
+ // Hidden legacy selector keeps only the current item; hundreds of OPTION nodes are intentionally avoided on iOS.
+ $("weaponSelect").innerHTML="";
+ const skills=Object.keys(DB.skills).sort((a,b)=>a.localeCompare(b,"ja"));
+ $("skillPicker").innerHTML="";
  $("manualDriftSkill").innerHTML=skills.filter(k=>DB.skills[k]?.drift!==false).map(k=>`<option>${esc(k)}</option>`).join("");
  const driftBase=[["見切り","見切り"],["弱点特効","弱点特効"],["超会心","超会心"],["__ELEMENT__","武器属性強化"],["連撃","連撃"],["攻撃","攻撃"]];$("driftPool").innerHTML=driftBase.map(([v,t],i)=>`<label class="check"><input type="checkbox" value="${v}" ${i<5?"checked":""}>${t}</label>`).join("");
- $("dataVersion").textContent=DB.version||"custom";updateDataCoverage();renderSkillCategories();renderSkillCatalog();
+ $("dataVersion").textContent=DB.version||"custom";updateDataCoverage();renderSkillCategories();
+ if($("skillCheckList"))$("skillCheckList").innerHTML=`<div class="empty">スキルタブを開くと一覧を表示します。</div>`;
 }
 function setupUptimes(){
  $("uptimeSliders").innerHTML=UPTIMES.map(u=>`<div class="field"><div class="slider-head"><span>${u.label}</span><span id="lbl_${u.id}">${u.value}%</span></div><input id="up_${u.id}" type="range" min="0" max="100" value="${u.value}"></div>`).join("");
@@ -755,11 +772,13 @@ function setupUptimes(){
 }
 function showTab(name){
  document.querySelectorAll(".tab,.bottom-tab").forEach(t=>t.classList.toggle("active",t.dataset.tab===name));document.querySelectorAll(".pane").forEach(p=>p.classList.add("hide"));$("pane-"+name).classList.remove("hide");
- if(name==="mysets")renderMysets();if(name==="compare")renderCompare();if(name==="materials")renderMaterialSetOptions();if(name==="data")renderArmorCatalog();
+ if(name==="mysets")renderMysets();if(name==="compare")renderCompare();if(name==="materials")renderMaterialSetOptions();
+ if(name==="skill"&&!skillCatalogReady){renderSkillCatalog();skillCatalogReady=true}
+ if(name==="data"&&!armorCatalogReady){renderArmorCatalog();armorCatalogReady=true}
  if(window.innerWidth<=760)window.scrollTo({top:0,behavior:"auto"});
 }
 async function exportBackup(){
- const data={app:"MH Now Build Lab",version:"0.3",exportedAt:new Date().toISOString(),excluded:[...excluded],mysets,requirements,manualDrift};
+ const data={app:"MH Now Build Lab",version:"0.4.3",exportedAt:new Date().toISOString(),excluded:[...excluded],mysets,requirements,manualDrift};
  const text=JSON.stringify(data,null,2),stamp=new Date().toISOString().slice(0,10),name=`MHNow_Build_Lab_backup_${stamp}.json`;
  let file=null;try{file=new File([text],name,{type:"application/json"})}catch(_e){}
  try{
@@ -778,9 +797,9 @@ function validateMaster(o){
 }
 async function loadMaster(file){
  const o=normalizeMaster(JSON.parse(await file.text()));validateMaster(o);DB=o;distroCache.clear();setupSelectors();
- $("weaponSelect").value=DB.weapons[0].id;setWeapon(DB.weapons[0]);renderArmorCatalog();updateStats();alert("外部データマスターを読み込みました。");
+ $("weaponSelect").innerHTML=`<option value="${esc(DB.weapons[0].id)}">${esc(DB.weapons[0].name)}</option>`;$("weaponSelect").value=DB.weapons[0].id;setWeapon(DB.weapons[0]);updateStats();alert("外部データマスターを読み込みました。");
 }
-function resetMaster(){DB=normalizeMaster(JSON.parse(JSON.stringify(BUILTIN)));distroCache.clear();setupSelectors();const w=DB.weapons.find(w=>w.id==="astalos_gs_g10")||DB.weapons[0];$("weaponSelect").value=w.id;setWeapon(w);renderArmorCatalog();updateStats()}
+function resetMaster(){DB=normalizeMaster(JSON.parse(JSON.stringify(BUILTIN)));distroCache.clear();setupSelectors();const w=DB.weapons.find(w=>w.id==="astalos_gs_g10")||DB.weapons[0];$("weaponSelect").innerHTML=`<option value="${esc(w.id)}">${esc(w.name)}</option>`;$("weaponSelect").value=w.id;setWeapon(w);updateStats()}
 
 
 let deferredInstallPrompt=null;
@@ -818,11 +837,12 @@ window.addEventListener("online",updateNetwork);window.addEventListener("offline
 async function init(){
  setupUptimes();const loaded=await tryLoadBundledMaster();setupSelectors();
  const saved=readStoredJson(STORAGE.state,{});requirements=saved.requirements||{};manualDrift=saved.manualDrift||{};
- const initial=DB.weapons.find(w=>w.id==="astalos_gs_g10")||DB.weapons.find(w=>w.id!=="custom")||DB.weapons[0];$("weaponSelect").value=initial.id;setWeapon(initial);
+ const initial=DB.weapons.find(w=>w.id==="astalos_gs_g10")||DB.weapons.find(w=>w.id!=="custom")||DB.weapons[0];$("weaponSelect").innerHTML=`<option value="${esc(initial.id)}">${esc(initial.name)}</option>`;$("weaponSelect").value=initial.id;setWeapon(initial);
+ await nextPaint();
  $("weaponSelect").onchange=()=>setWeapon(DB.weapons.find(w=>w.id===$("weaponSelect").value)||DB.weapons[0]);
  $("weaponPickerBtn").onclick=openWeaponPicker;$("weaponClose").onclick=()=>$("weaponModal").classList.remove("open");$("weaponModal").onclick=e=>{if(e.target===$("weaponModal"))$("weaponModal").classList.remove("open")};
- $("weaponSearch").oninput=renderWeaponPicker;$("weaponTypeFilter").onchange=renderWeaponPicker;$("weaponElementFilter").onchange=renderWeaponPicker;$("weaponCustomBtn").onclick=()=>{const w=DB.weapons.find(w=>w.id==="custom")||DB.weapons[0];$("weaponSelect").value=w.id;setWeapon(w);$("weaponModal").classList.remove("open")};
- $("skillSearchText").oninput=renderSkillCatalog;$("skillSelectedOnly").onchange=renderSkillCatalog;$("clearReq").onclick=()=>{requirements={};renderReq();persist();renderSkillCatalog()};
+ let weaponSearchTimer=0;$("weaponSearch").oninput=()=>{clearTimeout(weaponSearchTimer);weaponSearchTimer=setTimeout(renderWeaponPicker,120)};$("weaponTypeFilter").onchange=renderWeaponPicker;$("weaponElementFilter").onchange=renderWeaponPicker;$("weaponCustomBtn").onclick=()=>{const w=DB.weapons.find(w=>w.id==="custom")||DB.weapons[0];$("weaponSelect").innerHTML=`<option value="${esc(w.id)}">${esc(w.name)}</option>`;$("weaponSelect").value=w.id;setWeapon(w);$("weaponModal").classList.remove("open")};
+ $("skillSearchText").oninput=()=>{renderSkillCatalog();skillCatalogReady=true};$("skillSelectedOnly").onchange=()=>{renderSkillCatalog();skillCatalogReady=true};$("clearReq").onclick=()=>{requirements={};renderReq();persist();renderSkillCatalog();skillCatalogReady=true};
  $("powerSearch").onclick=runPower;$("skillSearch").onclick=runSkill;
  $("addSkill").onclick=()=>{};$("addManualDrift").onclick=()=>{const k=$("manualDriftSkill").value;manualDrift[k]=clamp(+$("manualDriftLevel").value||1,1,maxLv(k));renderManualDrift();persist()};
  $("driftMode").onchange=()=>{$("autoDriftBox").classList.toggle("hide",$("driftMode").value!=="auto");$("manualDriftBox").classList.toggle("hide",$("driftMode").value!=="manual")};
@@ -833,7 +853,10 @@ async function init(){
  $("calcMaterials").onclick=calcMaterial;$("materialSet").onchange=e=>currentMaterialSetId=e.target.value;$("exportBtn").onclick=exportBackup;$("importBtn").onclick=()=>$("importFile").click();
  $("installBtn").onclick=openInstallHelp;$("installBtn2").onclick=openInstallHelp;$("installClose").onclick=()=>$("installModal").classList.remove("open");$("installModal").onclick=e=>{if(e.target===$("installModal"))$("installModal").classList.remove("open")};$("refreshCache").onclick=refreshPwaCache;
  $("importFile").onchange=async e=>{if(e.target.files[0])try{await importBackup(e.target.files[0])}catch(err){alert("読込失敗: "+err.message)}e.target.value=""};$("masterFile").onchange=async e=>{if(e.target.files[0])try{await loadMaster(e.target.files[0])}catch(err){alert("マスター読込失敗: "+err.message)}e.target.value=""};$("resetMaster").onclick=resetMaster;
- renderReq();renderManualDrift();renderSkillCatalog();renderMysets();renderMaterialSetOptions();renderArmorCatalog();updateStats();runPower();registerPwa();
+ renderReq();renderManualDrift();renderMysets();renderMaterialSetOptions();updateStats();
+ $("powerResults").innerHTML=`<div class="empty"><b>準備完了</b><br>武器と条件を選び「最大威力構成を検索」を押してください。<br><span class="note">全装備マスター読込後の自動全探索はiOS負荷を避けるため停止しました。</span></div>`;
+ $("stEvaluated").textContent="-";$("stBest").textContent="-";$("stDrift").textContent="-";
+ await nextPaint();registerPwa();
  if(!loaded && $("dataSourceNote"))$("dataSourceNote").textContent="内蔵フォールバック。自動マスター未生成です。GitHub Actionsを実行してください。";
 }
 init();
