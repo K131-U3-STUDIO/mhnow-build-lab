@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="dark">
+<meta name="mhn-ui-revision" content="iphone-width-1">
 <meta name="theme-color" content="#0a0f15">
 <meta name="format-detection" content="telephone=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -120,7 +121,7 @@ button,.tab,.bottom-tab{-webkit-user-select:none;user-select:none}
 .skill-row .skill-lv:disabled{opacity:.45}.skill-selected-bar{display:flex;justify-content:space-between;gap:8px;align-items:center;margin:7px 0 8px}.skill-count{font-size:11px;color:var(--muted);line-height:1.4}
 .data-coverage{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:9px 0}.cov{border:1px solid var(--line);background:#0e151d;border-radius:9px;padding:8px}.cov b{font-size:16px}.cov span{display:block;font-size:9.5px;color:var(--muted)}
 .search-progress{font-size:11px;color:var(--muted);padding:8px 0}.diag{padding:11px;border:1px solid #5e4b20;background:#2d2514;color:#ffe3a0;border-radius:10px;font-size:12px;line-height:1.55}
-@media(max-width:960px){#pane-skill .layout{grid-template-columns:1fr}.skill-check-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:960px){#pane-skill .layout{grid-template-columns:minmax(0,1fr)}.skill-check-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.picker-filters{grid-template-columns:1fr 1fr}.picker-filters input{grid-column:1/-1}.skill-check-list{grid-template-columns:1fr}.skill-controls{grid-template-columns:minmax(0,1fr) minmax(92px,.7fr)}.weapon-row{min-height:58px}.data-coverage{grid-template-columns:1fr 1fr 1fr}}
 @media(max-width:430px){.skill-controls{grid-template-columns:1fr}.skill-control-label{font-size:10px}.skill-row select{height:40px}}
 
@@ -141,6 +142,58 @@ button,.tab,.bottom-tab{-webkit-user-select:none;user-select:none}
 #ownedDriftSkillChoices small{margin-left:auto;color:var(--muted);font-size:10px}
 .drift-owned-item{grid-template-columns:minmax(0,1fr) auto auto}
 .drift-manage .card{min-width:0;align-self:start}
+
+/* v0.6.1 UI2: phone-width skill conditions. No search/model changes. */
+#pane-skill,
+#pane-skill .layout,
+#pane-skill .layout > *,
+#pane-skill .bd,
+#pane-skill .skill-toolbar,
+#pane-skill .skill-toolbar > *,
+#pane-skill .skill-cats,
+#pane-skill .skill-check-list,
+#pane-skill .skill-selected-bar,
+#pane-skill .skill-controls,
+#pane-skill .skill-control,
+#pane-skill .results,
+#pane-skill .result > * {
+ min-width:0;
+ max-width:100%;
+}
+#pane-skill .skill-selected-bar{flex-wrap:wrap}
+#pane-skill .skill-selected-bar .check{margin:0;min-height:32px}
+#pane-skill .skill-count{flex:1 1 180px;overflow-wrap:anywhere}
+#pane-skill .req{min-width:0;max-width:100%;overflow-wrap:anywhere;line-height:1.5}
+#pane-skill .req button{flex:0 0 auto;min-width:28px;min-height:28px}
+#pane-skill .chip{min-width:0;max-width:100%;overflow-wrap:anywhere}
+#pane-skill .equip{overflow-wrap:anywhere}
+@media(max-width:760px){
+ header{flex-wrap:wrap}
+ .brand{flex:1 1 100%;max-width:100%}
+ .brand .logo{flex:0 0 44px}
+ .brand > div:last-child{min-width:0;flex:1}
+ .brand h1{overflow-wrap:anywhere}
+ .brand .sub{max-width:100%}
+ .header-actions{min-width:0;max-width:100%;flex:1 1 100%}
+ #pane-skill .skill-cats{flex-wrap:wrap;overflow:visible;gap:6px}
+ #pane-skill .skill-cat{min-height:40px;max-width:100%;font-size:12px;white-space:normal;overflow-wrap:anywhere}
+ #pane-skill .skill-check-list{grid-template-columns:minmax(0,1fr)}
+ #pane-skill .skill-row{grid-template-columns:28px minmax(0,1fr);grid-template-areas:"check info" "controls controls"}
+ #pane-skill .skill-row input[type=checkbox]{width:24px;height:24px}
+ #pane-skill .skill-row .sname{font-size:14px;line-height:1.45}
+ #pane-skill .skill-row .smeta{font-size:11px;line-height:1.4}
+ #pane-skill .skill-controls{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ #pane-skill .skill-control-label{font-size:11px}
+ #pane-skill .skill-row select,
+ #pane-skill #skillSearchText,
+ #pane-skill #skillSort{font-size:16px;min-width:0;max-width:100%;min-height:44px;height:auto}
+ #pane-skill #clearReq{min-height:44px;white-space:nowrap}
+ #pane-skill .skill-selected-bar .check{min-height:44px}
+ #pane-skill .skill-selected-bar .check input{width:20px;height:20px}
+}
+@media(max-width:360px){
+ #pane-skill .skill-controls{grid-template-columns:minmax(0,1fr)}
+}
 </style>
 </head>
 <body>
@@ -319,7 +372,7 @@ button,.tab,.bottom-tab{-webkit-user-select:none;user-select:none}
  </div></div>
 </section>
 
-<footer>Monster Hunter Now は CAPCOM / Scopely 等の権利物です。本ツールは非公式の個人用シミュレータです。v0.6.1 PWA / 装備データ基準: 2026-09-18。ゲーム更新時は公式表示を優先してください。</footer>
+<footer>Monster Hunter Now は CAPCOM / Scopely 等の権利物です。本ツールは非公式の個人用シミュレータです。v0.6.1 PWA / UI: iPhone幅修正1 / 装備データ基準: 2026-09-18。ゲーム更新時は公式表示を優先してください。</footer>
 </div>
 
 
