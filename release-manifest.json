@@ -1,10 +1,10 @@
 {
-  "release": "v061-9de654c554b4ecc3",
+  "release": "v061-18dea196faebb5b3",
   "schemaVersion": 6,
   "assets": {
     "index.html": "bf65976c4515146af49d87fdfab53f30ca455065aa9ea92faa0c22fbddaa25a6",
     "manifest.webmanifest": "dc867f355962e3cb15d47f4cdeb07891771d113363633fe2b73594ea9750d616",
-    "data/mhn_master.json": "ee70275c885a816acd21174e9ec2542726260ed48afa3284ae96985a3f570973",
+    "data/mhn_master.json": "bfbc2b42060b061223fcbb48ce9b5ba2d36d13fc295935eebba2551daabb8a61",
     "icons/icon-192.png": "b60767894e83bb97b88138fda8f84b857d99ade7fc32f78a4346fb93dcc19145",
     "icons/icon-512.png": "42c85a596a5ff574b906d1668e787467d7dcea00998e69373ac0d9a20abbbd6e",
     "icons/apple-touch-icon.png": "0d0789e624cdcc036f59d58b6b0aa9176e9fbec23ce00d7f99a62497726b5ac2",
