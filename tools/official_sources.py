@@ -4,6 +4,7 @@ No private endpoints or reference simulator implementation are used.
 import json,re,unicodedata,datetime as dt
 from urllib.parse import urlsplit
 from bs4 import BeautifulSoup
+from data_validation import validate_official_skill_conditions, UnsupportedSkillCondition
 BASE='https://monsterhunternow.com/ja/'
 TYPE_MAP=dict(zip(['SWORD_SHIELD','DUAL_BLADES','GREAT_SWORD','LONG_SWORD','HAMMER','HUNTING_HORN','LANCE','GUNLANCE','SWITCH_AXE','CHARGE_BLADE','INSECT_GLAIVE','LIGHT_BOWGUN','HEAVY_BOWGUN','BOW'],['片手剣','双剣','大剣','太刀','ハンマー','狩猟笛','ランス','ガンランス','スラッシュアックス','チャージアックス','操虫棍','ライトボウガン','ヘビィボウガン','弓']))
 ELEMENT_MAP={'NO_ELEMENT':'無属性','FIRE':'火','WATER':'水','THUNDER':'雷','ICE':'氷','DRAGON':'龍','POISON':'毒','PARALYSIS':'麻痺','SLEEP':'睡眠','BLAST':'爆破'}
@@ -15,9 +16,16 @@ def payload(html,key):
     raise ValueError('official guide payload missing: '+key)
 def clean(s):return unicodedata.normalize('NFKC',s).strip()
 def build(skillp,armorp,weaponp,previous):
+    validate_official_skill_conditions(armorp,weaponp)
     now=dt.datetime.now(dt.timezone.utc).isoformat()
     def prov(route):return {'sourceURL':BASE+route,'retrievedAt':now,'confidence':'official-structured'}
     tr=skillp['guideTranslations'];sk=skillp['skills'];names={k:clean(tr[v['name']]) for k,v in sk.items()}
+    for equipment_id,equipment in weaponp['weapons'].items():
+        if not equipment.get('enabled',True):continue
+        for grade in equipment['grades']:
+            for row in grade['skills']:
+                if 'requiredCustomEnhancementLevel' in row and (row['kind'] not in names or type(row['level']) is not int or not 1<=row['level']<=sk[row['kind']]['maxLevel']):
+                    raise UnsupportedSkillCondition('unresolved conditional skill: '+equipment_id)
     skills={k:{**v,'drift':False,'driftStones':[],'driftStatus':'unknown'} for k,v in previous.get('skills',{}).items()}
     cats={'ATTACK_BOOST':'attack','ELEMENT_BOOST':'element','DEFENCE_BOOST':'defense','BATTLE_ACTION':'action','OTHERS':'other'}
     for kind,v in sk.items():
@@ -34,6 +42,7 @@ def build(skillp,armorp,weaponp,previous):
     def skillmap(rows):
         out={}
         for r in rows:
+            if 'requiredCustomEnhancementLevel' in r:continue
             if r['kind'] not in names:raise ValueError('unresolved skill '+r['kind'])
             out[names[r['kind']]]=r['level']
         return out
@@ -95,8 +104,14 @@ def build(skillp,armorp,weaponp,previous):
             for k,n in sm.items():
                 if last.get(k)!=n:unlocks.append({'grade':row['grade'],'skill':k,'level':n})
             last=sm
+        conditional=[{'skill':names[r['kind']],'level':r['level'],'requiredCustomEnhancementLevel':r['requiredCustomEnhancementLevel']} for r in g['skills'] if 'requiredCustomEnhancementLevel' in r]
+        for row in grades:
+            for r in row['skills']:
+                if 'requiredCustomEnhancementLevel' in r:
+                    item={'grade':row['grade'],'skill':names[r['kind']],'level':r['level'],'requiredCustomEnhancementLevel':r['requiredCustomEnhancementLevel']}
+                    if not any(x.get('skill')==item['skill'] and x.get('requiredCustomEnhancementLevel')==item['requiredCustomEnhancementLevel'] and x.get('level')==item['level'] for x in unlocks):unlocks.append(item)
         if v['element'] not in ELEMENT_MAP:raise ValueError('unknown element '+v['element'])
-        weapons.append({'id':'weapon_'+key,'name':clean(wt[g['name']]),'type':TYPE_MAP[v['category']],'grade':f"G{g['grade']}.{level['level']}",'attack':level['attack'],'affinity':level['critical'],'element':ELEMENT_MAP[v['element']],'elementValue':level['elementAttack'],'skills':skillmap(g['skills']),'skillUnlocks':unlocks,'monster':wt.get('MONSTER_NAME_'+v['series'].removeprefix('SERIES_'),''),'source':BASE+'weapons/'+key,'provenance':prov('weapons'),'upgradeMaterials':{'status':'unavailable','steps':[]}})
+        weapons.append({'id':'weapon_'+key,'name':clean(wt[g['name']]),'type':TYPE_MAP[v['category']],'grade':f"G{g['grade']}.{level['level']}",'attack':level['attack'],'affinity':level['critical'],'element':ELEMENT_MAP[v['element']],'elementValue':level['elementAttack'],'skills':skillmap(g['skills']),'conditionalSkills':conditional,'normalUpgrade':{'grade':g['grade'],'level':level['level']},'skillUnlocks':unlocks,'monster':wt.get('MONSTER_NAME_'+v['series'].removeprefix('SERIES_'),''),'source':BASE+'weapons/'+key,'provenance':prov('weapons'),'upgradeMaterials':{'status':'unavailable','steps':[]}})
     custom=next(w for w in previous['weapons'] if w['id']=='custom')
     return {'schemaVersion':6,'version':'0.6-RC-official-'+now,'generatedAt':now,'sourceNote':f'公式構造データ: 武器{len(weapons)} / 防具{len(armor)}（旧データ保持 {len(armor)-len(armorp["armor"])}） / スキル{len(skills)}','elements':list(ELEMENT_MAP.values()),'weapons':[custom]+weapons,'armors':armor,'skills':skills,'driftstones':stones,'materialsCatalog':{},'validationStatus':'parsed-not-gameplay-verified','canonicalCommit':previous.get('canonicalCommit')}
 def fetch(get,previous):

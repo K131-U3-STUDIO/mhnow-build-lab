@@ -42,6 +42,8 @@ jobs:
           node tests/rc2.test.cjs
           node tests/ui.test.cjs
           node tests/rc2-ui.test.cjs
+          node tests/index-ui.test.cjs
+          node tests/style-ui.test.cjs
       - name: Commit generated source (does not trigger Pages)
         run: |
           git config user.name 'github-actions[bot]'

@@ -1,0 +1,104 @@
+[
+  {
+    "officialId": "AZURE_RATHALOS_SWORDSHIELD",
+    "skill": "SPスキル威力UP・境地",
+    "level": 1,
+    "threshold": 10
+  },
+  {
+    "officialId": "AZURE_RATHALOS_GREATSWORD",
+    "skill": "SPスキル威力UP・境地",
+    "level": 1,
+    "threshold": 10
+  },
+  {
+    "officialId": "AZURE_RATHALOS_LIGHTBOWGUN",
+    "skill": "SPスキル威力UP・境地",
+    "level": 1,
+    "threshold": 10
+  },
+  {
+    "officialId": "AZURE_RATHALOS_LONGSWORD",
+    "skill": "SPスキル威力UP・境地",
+    "level": 1,
+    "threshold": 10
+  },
+  {
+    "officialId": "AZURE_RATHALOS_BOW",
+    "skill": "SPスキル威力UP・境地",
+    "level": 1,
+    "threshold": 10
+  },
+  {
+    "officialId": "BLACK_DIABLOS_HAMMER",
+    "skill": "破壊王・境地",
+    "level": 1,
+    "threshold": 10
+  },
+  {
+    "officialId": "BLACK_DIABLOS_BOW",
+    "skill": "破壊王・境地",
+    "level": 1,
+    "threshold": 10
+  },
+  {
+    "officialId": "AZURE_RATHALOS_LANCE",
+    "skill": "SPスキル威力UP・境地",
+    "level": 1,
+    "threshold": 10
+  },
+  {
+    "officialId": "BLACK_DIABLOS_DUALBLADES",
+    "skill": "破壊王・境地",
+    "level": 1,
+    "threshold": 10
+  },
+  {
+    "officialId": "AZURE_RATHALOS_CHARGEBLADE",
+    "skill": "SPスキル威力UP・境地",
+    "level": 1,
+    "threshold": 10
+  },
+  {
+    "officialId": "BLACK_DIABLOS_CHARGEBLADE",
+    "skill": "破壊王・境地",
+    "level": 1,
+    "threshold": 10
+  },
+  {
+    "officialId": "AZURE_RATHALOS_GUNLANCE",
+    "skill": "SPスキル威力UP・境地",
+    "level": 1,
+    "threshold": 10
+  },
+  {
+    "officialId": "BLACK_DIABLOS_HEAVYBOWGUN",
+    "skill": "破壊王・境地",
+    "level": 1,
+    "threshold": 10
+  },
+  {
+    "officialId": "BLACK_DIABLOS_SWITCHAXE",
+    "skill": "破壊王・境地",
+    "level": 1,
+    "threshold": 10
+  },
+  {
+    "officialId": "AZURE_RATHALOS_SWITCHAXE",
+    "skill": "SPスキル威力UP・境地",
+    "level": 1,
+    "threshold": 10
+  },
+  {
+    "officialId": "AZURE_RATHALOS_INSECTGLAIVE",
+    "skill": "SPスキル威力UP・境地",
+    "level": 1,
+    "threshold": 10
+  },
+  {
+    "officialId": "BLACK_DIABLOS_INSECTGLAIVE",
+    "skill": "破壊王・境地",
+    "level": 1,
+    "threshold": 10
+  }
+]

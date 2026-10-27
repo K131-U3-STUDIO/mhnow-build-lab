@@ -5,8 +5,16 @@ permissions:
 jobs:
   checks:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      PYTHONUTF8: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -14,7 +22,17 @@ jobs:
         with:
           node-version: '22'
       - run: pip install -r requirements.txt
-      - run: python tools/build_engine.py
-      - run: git diff --exit-code -- js/engine.js
-      - run: node --check js/app.js && npm test
-      - run: python -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Install browser dependencies outside checkout
+        run: |
+          npm install --prefix "$RUNNER_TEMP/browser-deps" --no-save --package-lock=false playwright@1.62.1
+          "$RUNNER_TEMP/browser-deps/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Verify exact commit and independently generate and test
+        env:
+          NODE_PATH: ${{ runner.temp }}/browser-deps/node_modules
+        run: python tools/ci_candidate.py --work-dir "$RUNNER_TEMP/candidate-work" --output "$RUNNER_TEMP/candidate-output"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: generated-candidate-${{ env.CANDIDATE_SHA }}
+          path: ${{ runner.temp }}/candidate-output/
+          if-no-files-found: error
+          retention-days: 7

@@ -3,6 +3,28 @@ import json, math, os, tempfile
 from pathlib import Path
 TYPES={'片手剣','双剣','大剣','太刀','ハンマー','狩猟笛','ランス','ガンランス','スラッシュアックス','チャージアックス','操虫棍','ライトボウガン','ヘビィボウガン','弓'}
 SLOTS={'head','chest','arms','waist','legs'}
+class UnsupportedSkillCondition(ValueError):
+    """Source semantics cannot be represented by the current scalar skill map."""
+
+# Only the verified style Lv10 skill-unlock condition is supported. No style maximum is inferred.
+SUPPORTED_STYLE_SKILL_LEVEL = 10
+
+def validate_official_skill_conditions(armorp, weaponp):
+    for kind, rows in [('armor', armorp['armor']), ('weapons', weaponp['weapons'])]:
+        for equipment_id, equipment in rows.items():
+            if kind=='weapons' and not equipment.get('enabled', True):continue
+            for grade in equipment['grades']:
+                for skill in grade['skills']:
+                    unknown=set(skill)-{'kind','level','requiredCustomEnhancementLevel'}
+                    threshold=skill.get('requiredCustomEnhancementLevel')
+                    if unknown or ('requiredCustomEnhancementLevel' in skill and (
+                        kind!='weapons' or type(threshold) is not int or threshold!=SUPPORTED_STYLE_SKILL_LEVEL
+                        or equipment.get('customizationSpec',{}).get('customizable') is not True)):
+                        raise UnsupportedSkillCondition(
+                            f"unsupported official skill condition: {kind}/{equipment_id} "
+                            f"grade={grade['grade']} skill={skill['kind']} "
+                            f"requiredCustomEnhancementLevel={threshold!r} unknown={sorted(unknown)}")
+
 def validate(data, previous=None, require_drift=True):
     official_ids=[a['officialId'] for a in data.get('armors',[]) if a.get('officialId')]
     if len(official_ids)!=len(set(official_ids)):raise ValueError('duplicate armor officialId')
@@ -23,6 +45,11 @@ def validate(data, previous=None, require_drift=True):
             for k,v in r['skills'].items():
                 if k not in skills or not isinstance(v,int) or isinstance(v,bool) or not 1<=v<=skills[k].get('max',0):errors.append('invalid equipment skill '+k)
     for w in weapons:
+        for row in w.get('conditionalSkills',[]):
+            if set(row)!={'skill','level','requiredCustomEnhancementLevel'}:errors.append('unknown weapon skill condition')
+            k=row.get('skill');n=row.get('level');threshold=row.get('requiredCustomEnhancementLevel')
+            if k not in skills or type(n) is not int or not 1<=n<=skills[k].get('max',0):errors.append('invalid conditional skill')
+            if type(threshold) is not int or threshold!=SUPPORTED_STYLE_SKILL_LEVEL:errors.append('invalid custom enhancement condition')
         for k in ['attack','affinity','elementValue']:
             v=w.get(k)
             if not isinstance(v,(int,float)) or not math.isfinite(v):errors.append('invalid weapon stat '+k)

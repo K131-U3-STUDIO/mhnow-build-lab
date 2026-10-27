@@ -114,7 +114,8 @@ function sumSkills(parts,weaponSkills={},drift={}){
 
 function calcFromSkills(skills,weapon,statBonus={}){
  let raw=(+weapon.attack||0)+(+statBonus.attack||0), aff=(+weapon.affinity||0)+(+statBonus.affinity||0), elem=+weapon.elementValue||0;
- const baseAff=aff, b=[];
+ const baseRaw=+weapon.attack||0,baseElement=elem,b=[];
+ if(weapon.styleState){b.push(["スタイル強化",styleNote(weapon)]);for(const r of weapon.conditionalSkillStatus||[])b.push([r.skill,`スタイルLv${r.requiredCustomEnhancementLevel}技能: ${r.applied?"採用":"不採用"}`])}
  if(+statBonus.attack)b.push(["漂移付加・攻撃力",`攻撃 +${+statBonus.attack}`]);if(+statBonus.affinity)b.push(["漂移付加・会心率",`会心 +${+statBonus.affinity}%`]);
  const atk=lv([50,100,150,200,300],skills["攻撃"]||0); if(atk){raw+=atk;b.push(["攻撃",`攻撃 +${atk}`])}
  if((skills["攻撃"]||0)>=5){const v=lv([150,350],skills["攻撃・境地"]||0);if(v){raw+=v;b.push(["攻撃・境地",`攻撃 +${v}`])}}
@@ -132,6 +133,7 @@ function calcFromSkills(skills,weapon,statBonus={}){
  if(advName && (skills[elemName]||0)>=5){const add=lv([200,400],skills[advName]||0);if(add){elem+=add;b.push([advName,`属性 +${add}`])}}
 
 
+ const rawBeforeMultipliers=raw,elementAdded=elem-baseElement;
  const powerhouse=lv([.10,.15,.25],skills["攻撃活性"]||0);if(powerhouse){raw*=1+powerhouse;b.push(["攻撃活性",`物理 ×${1+powerhouse}`])}
  const burst=lv([.05,.10,.15,.20,.30],skills["連撃"]||0)*getUptime("burst");if(burst){raw*=1+burst;b.push(["連撃",`平均物理 ×${(1+burst).toFixed(3)}`])}
  const guard=lv([.10,.15,.20,.30,.40],skills["攻めの守勢"]||0)*getUptime("guard");if(guard){raw*=1+guard;b.push(["攻めの守勢",`平均物理 ×${(1+guard).toFixed(3)}`])}
@@ -141,12 +143,22 @@ function calcFromSkills(skills,weapon,statBonus={}){
  // Integrate conditional affinity before clamping: average-then-clamp biases caps/negative affinity.
  const wexFull=lv([20,25,30,40,50],skills["弱点特効"]||0),latentFull=lv([20,30,40,50,60],skills["力の解放"]||0);
  const wp=getUptime("wex"),lp=getUptime("latent"),fixed=aff-wexFull*wp-latentFull*lp;
- let critMul=0,posCrit=0,effAff=0;
- for(const [onW,pw] of [[0,1-wp],[1,wp]])for(const [onL,pl] of [[0,1-lp],[1,lp]]){const probability=pw*pl,a=clamp(fixed+onW*wexFull+onL*latentFull,-100,100);effAff+=probability*a;critMul+=probability*(a>=0?1+a/100*(critBoost-1):1+(-a)/100*(.75-1));posCrit+=probability*Math.max(0,a)/100}
- let rawExp=raw*critMul;b.push(["会心期待値",`${effAff.toFixed(1)}% / 倍率 ${critBoost.toFixed(2)} → ×${critMul.toFixed(4)}`]);
- // Generic damage: critical affects elemental damage; critical-element increase applies to weapon element only.
+ // Keep base element and additive skills separate in each critical branch.
  const inc=lv([.30,.40,.50,.60,.80],skills["会心撃【属性】"]||0);
- elem=elem*critMul+(+weapon.elementValue||0)*inc*posCrit*critBoost;
+ let rawExp=0,elemExpBeforeFactor=0,effAff=0,critMul=0;
+ const branches=[];
+ for(const [onW,pw] of [[0,1-wp],[1,wp]])for(const [onL,pl] of [[0,1-lp],[1,lp]]){
+  const stateProbability=pw*pl,a=clamp(fixed+onW*wexFull+onL*latentFull,-100,100);effAff+=stateProbability*a;
+  for(const [kind,p,multiplier] of [["normal",1-Math.abs(a)/100,1],[a>=0?"critical":"negative",Math.abs(a)/100,a>=0?critBoost:.75]]){
+   const probability=stateProbability*p;if(!probability)continue;
+   const elementalBase=baseElement*(1+(kind==="critical"?inc:0));
+   const physical=raw*multiplier,elemental=(elementalBase+elementAdded)*multiplier;
+   rawExp+=probability*physical;elemExpBeforeFactor+=probability*elemental;critMul+=probability*multiplier;
+   branches.push({kind,probability,physical,elemental});
+  }
+ }
+ b.push(["会心期待値",`${effAff.toFixed(1)}% / 倍率 ${critBoost.toFixed(2)} → ×${critMul.toFixed(4)}`]);
+ elem=elemExpBeforeFactor;
  if(inc)b.push(["会心撃【属性】",`武器属性値のみ +${(inc*100).toFixed(0)}%（会心時）`]);
 
  const nerg=lv([.10,.15,.20],skills["滅尽龍の渇望"]||0);if(nerg){rawExp*=1+nerg;elem*=1+nerg;b.push(["滅尽龍の渇望",`ダメージ ×${(1+nerg).toFixed(2)}`])}
@@ -157,8 +169,18 @@ function calcFromSkills(skills,weapon,statBonus={}){
  const sn=lv([.10,.15,.20,.25,.30],skills["闇討ち"]||0)*getUptime("sneak");if(sn){rawExp*=1+sn;elem*=1+sn;b.push(["闇討ち",`平均ダメージ ×${(1+sn).toFixed(3)}`])}
 
  const useElem=$("weakElement").checked && !["無属性","毒","麻痺","睡眠","爆破"].includes(weapon.element);
- const elemExp=useElem?elem:0;
- return {score:rawExp+elemExp,rawExpected:rawExp,elemExpected:elemExp,affinity:effAff,breakdown:b};
+ const factorInput=$("elementMultiplier")?.value;
+ // Absent in old snapshots: retain the former ON=1 / OFF=0 behavior.
+ const elementMultiplier=factorInput===undefined||factorInput===""?1:Number(factorInput);
+ if(!Number.isFinite(elementMultiplier)||elementMultiplier<0||elementMultiplier>10)throw new Error("属性倍率は0〜10の数値で入力してください");
+ const elemExp=useElem?elem*elementMultiplier:0;
+ b.unshift(["基礎値",`物理 ${baseRaw} / 属性 ${baseElement}`],["スキル・漂移加算",`物理 +${rawBeforeMultipliers-baseRaw} / 属性 +${elementAdded}`]);
+ b.push(["属性倍率",`${useElem?elementMultiplier:0}倍${useElem?"（属性側のみ）":"（属性OFFまたは状態異常・無属性）"}`]);
+ for(const [skill,id] of [["弱点特効","wex"],["力の解放","latent"],["連撃","burst"],["攻めの守勢","guard"],["火事場力","heroics"],["闘気活性","spirit"],["ジャスト巧撃【持続】","dodger"],["闇討ち","sneak"]])if(skills[skill])b.push([skill+" 条件",`${(getUptime(id)*100).toFixed(0)}%${skill==="ジャスト巧撃【持続】"&&daring?" / 果敢により適用0":""}`]);
+ if(skills["グループハント強化【攻撃】"])b.push(["グループ条件",$("groupHunt").checked?"ON":"OFF / 適用0"]);
+ for(const [skill,level] of Object.entries(skills))if(level>0&&!isModeled(skill))b.push([skill,"指数未対応・加点なし"]);
+ const calculation={baseRaw,baseElement,rawAdded:rawBeforeMultipliers-baseRaw,elementAdded,physicalBeforeCritical:raw,elementMultiplier:useElem?elementMultiplier:0,branches};
+ return {score:rawExp+elemExp,rawExpected:rawExp,elemExpected:elemExp,affinity:effAff,breakdown:b,calculation};
 }
 
 
@@ -193,7 +215,7 @@ function rebuildFastIndexes(){
  weaponPickerRows=DB.weapons.filter(w=>w.id!=="custom").map(w=>({w,search:[w.name,w.type,w.element,w.monster,w.sourceMaterial,w.source].filter(Boolean).join(" ").toLowerCase()}));
  skillAvailabilityCache=new Map();
  for(const a of DB.armors)for(const k of Object.keys(a.skills||{})){const x=skillAvailabilityCache.get(k)||{a:0,w:0};x.a++;skillAvailabilityCache.set(k,x)}
- for(const w of DB.weapons)for(const k of Object.keys(w.skills||{})){const x=skillAvailabilityCache.get(k)||{a:0,w:0};x.w++;skillAvailabilityCache.set(k,x)}
+ for(const w of DB.weapons)for(const k of new Set([...Object.keys(w.skills||{}),...(w.conditionalSkills||[]).map(r=>r.skill)])){const x=skillAvailabilityCache.get(k)||{a:0,w:0};x.w++;skillAvailabilityCache.set(k,x)}
  weaponPickerIndexReady=true;skillCatalogReady=false;armorCatalogReady=false;
 }
 function nextPaint(){return new Promise(resolve=>requestAnimationFrame(()=>resolve()));}
@@ -232,8 +254,9 @@ function updateDataCoverage(){
 }
 function updateWeaponSummary(w){
  if(!w||!$("weaponSummary"))return;
+ w=resolveStyleSkills(w,styleSkillStates);
  const sk=Object.entries(w.skills||{}).filter(([,v])=>+v>0).map(([k,v])=>`${esc(k)} Lv${v}`).join(" / ");
- $("weaponSummary").innerHTML=`<b>${esc(w.type||"任意")}｜${esc(w.name)}</b><div class="meta">${esc(w.element||"無属性")} ${w.elementValue||0} / 攻撃 ${w.attack||0} / 会心 ${w.affinity||0}%${w.monster?` / ${esc(w.monster)}`:""}</div>${sk?`<div class="weapon-skill-box"><div class="weapon-skill-label">武器装備スキル（構成計算へ反映）</div><div class="chips">${chipHtml(w.skills||{})}</div></div>`:""}`;
+ $("weaponSummary").innerHTML=`<b>${esc(w.type||"任意")}｜${esc(w.name)}</b><div class="meta">${esc(w.element||"無属性")} ${w.elementValue||0} / 攻撃 ${w.attack||0} / 会心 ${w.affinity||0}%${w.monster?` / ${esc(w.monster)}`:""}</div><div class="note">${esc(w.normalUpgrade?`通常強化: G${w.normalUpgrade.grade}.${w.normalUpgrade.level}（公式データ最大・能力値は手入力可） / `:"")}${esc(styleNote(w))}</div>${sk?`<div class="weapon-skill-box"><div class="weapon-skill-label">武器装備スキル（構成計算へ反映）</div><div class="chips">${chipHtml(w.skills||{})}</div></div>`:""}`;
 }
 function renderWeaponPicker(){
  if(!weaponPickerIndexReady)rebuildFastIndexes();
@@ -323,11 +346,24 @@ function assignManualToArmors(parts){
  return byArmor;
 }
 
+let styleSkillStates={};
+function resolveStyleSkills(w,settings={}){
+ const rows=w.conditionalSkills||[];
+ if(!Array.isArray(rows)||rows.some(r=>!r||typeof r.skill!=="string"||!r.skill||!Number.isInteger(r.level)||r.level<1||Object.keys(r).some(k=>!["skill","level","requiredCustomEnhancementLevel"].includes(k))||r.requiredCustomEnhancementLevel!==10))throw new Error("未対応のスタイル技能条件です");
+ const explicit=Object.prototype.hasOwnProperty.call(settings,w.id),unlocked=explicit?settings[w.id]:false;
+ if(typeof unlocked!=="boolean")throw new Error("スタイル技能の解放状態が不正です");
+ const unconditionalSkills={...(w.unconditionalSkills||w.skills)},skills={...unconditionalSkills};
+ const conditionalSkillStatus=rows.map(r=>({...r,applied:unlocked}));
+ for(const r of conditionalSkillStatus)if(r.applied)skills[r.skill]=Math.max(skills[r.skill]||0,r.level);
+ return {...w,skills,unconditionalSkills,styleState:{unlocked,explicit,hasConditional:rows.length>0},conditionalSkillStatus};
+}
+function styleNote(w){return (w.styleState?.hasConditional?`スタイルLv10技能: ${w.styleState.unlocked?"解放済み":w.styleState.explicit?"未解放":"未解放（未指定の初期値）"} / `:"")+"スタイル強化の能力値加算は未反映"}
+function updateStyleInput(w){const e=$("styleSkillInput");if(!e)return;const resolved=resolveStyleSkills(w,styleSkillStates);e.disabled=!resolved.styleState.hasConditional;e.value=resolved.styleState.unlocked?"unlocked":"locked";$("styleSkillNote").textContent=styleNote(resolved)}
 function currentWeapon(){
  const preset=DB.weapons.find(w=>w.id===$("weaponSelect").value)||DB.weapons[0];
- return {...preset,attack:+$("rawInput").value||0,affinity:+$("affInput").value||0,element:$("elementSelect").value,elementValue:+$("elemInput").value||0};
+ return resolveStyleSkills({...preset,attack:+$("rawInput").value||0,affinity:+$("affInput").value||0,element:$("elementSelect").value,elementValue:+$("elemInput").value||0},styleSkillStates);
 }
-function setWeapon(w){if(!w)return;$("rawInput").value=w.attack||0;$("affInput").value=w.affinity||0;$("elementSelect").value=w.element||"無属性";$("elemInput").value=w.elementValue||0;updateWeaponSummary(w)}
+function setWeapon(w){if(!w)return;$("rawInput").value=w.attack||0;$("affInput").value=w.affinity||0;$("elementSelect").value=w.element||"無属性";$("elemInput").value=w.elementValue||0;updateStyleInput(w);updateWeaponSummary(resolveStyleSkills(w,styleSkillStates))}
 function effectiveArmor(a){const setting=armorSettings[a.id];if(!setting||!a.skillsByGrade)return a;const grades=Object.keys(a.skillsByGrade).map(Number).filter(g=>g<=setting.grade).sort((a,b)=>b-a);if(!grades.length)return null;return {...a,grade:`G${setting.grade}`,skills:a.skillsByGrade[grades[0]]}}
 function usable(slot){return (armorSlotCache[slot]||[]).filter(a=>!excluded.has(a.id)).map(effectiveArmor).filter(Boolean)}
 function driftSlots(parts){return parts.reduce((n,p)=>n+availableDriftSlots(p),0)}
@@ -416,14 +452,15 @@ function resultHtml(r,i,req={},limits={}){
  return `<div class="result" data-i="${i}"><div class="rank">#${i+1}</div><div>
  <div class="equip"><b>${esc(eq)}</b></div><div class="note">未対応効果を除外した参考順位${r.skills["果敢"]&&r.skills["ジャスト巧撃【持続】"]?" / 果敢: ジャスト巧撃【持続】は発動不可・加点0":""}</div><div class="chips">${chipHtml(r.skills,r.drift,req,limits)}</div>
  <div class="result-actions"><button class="btn small cmp" data-i="${i}">比較+</button></div></div>
- <div class="score">${r.score.toFixed(1)}<small>火力指数 / 漂移 ${r.usedDrift}/${r.slots}</small></div></div>`;
+ <div class="score">${r.score.toFixed(1)}<small>条件付き火力指数<br>物理 ${r.rawExpected.toFixed(1)} / 属性 ${r.elemExpected.toFixed(1)}<br>漂移 ${r.usedDrift}/${r.slots}</small></div></div>`;
 }
 
 
 let activeSearch=null,searchSequence=0;
 function deepSnapshot(x){const out=JSON.parse(JSON.stringify(x));const freeze=v=>{if(v&&typeof v==="object"){Object.values(v).forEach(freeze);Object.freeze(v)}return v};return freeze(out)}
-function searchSnapshot(req={},limits=skillLimits){const prefs=capturePreferences();return deepSnapshot({db:DB,ownedDrift,manualDrift,armorSettings,requirements:req,skillLimits:limits,excluded:[...excluded],weapon:currentWeapon(),config:{values:{...prefs.values,weaponSelect:{value:prefs.weaponId}},driftPool:prefs.driftPool},preferences:prefs})}
+function searchSnapshot(req={},limits=skillLimits){const prefs=capturePreferences();return deepSnapshot({db:DB,ownedDrift,manualDrift,armorSettings,requirements:req,skillLimits:limits,excluded:[...excluded],weapon:currentWeapon(),config:{styleSkillStates:prefs.styleSkillStates,values:{...prefs.values,weaponSelect:{value:prefs.weaponId}},driftPool:prefs.driftPool},preferences:prefs})}
 function enumerate(req={},progressCb=null,limits=skillLimits){
+ if($("elementMultiplier")?.checkValidity&&(!$("elementMultiplier").value.trim()||!$("elementMultiplier").checkValidity()))return Promise.reject(new Error("属性倍率は0〜10の数値で入力してください"));
  if(typeof Worker==="undefined")return Promise.reject(new Error("このブラウザはWeb Worker非対応です。Safariを更新してください。"));
  activeSearch?.cancel();const input=searchSnapshot(req,limits),mode=input.config.values.driftMode.value;
  if(mode==="theory"&&!Object.keys(input.db.skills).some(driftableSkill))return Promise.reject(new Error("漂移候補データが0件のため理論探索を開始できません。"));
@@ -491,7 +528,7 @@ function openDetail(r){
   </div></div>
   <div class="card" style="margin-top:10px"><div class="hd">発動スキル</div><div class="bd"><div class="chips">${chipHtml(r.skills,r.drift)}</div></div></div>
  </div><div>
-  <div class="card"><div class="hd">計算内訳</div><div class="bd"><table class="table">${bd}</table></div></div>
+  <div class="card"><div class="hd">計算内訳</div><div class="bd"><p class="note">装備比較用の条件付き火力指数。実ダメージ・DPSではありません。未確定の物理倍率順は従来モデルを維持しています。</p><table class="table">${bd}</table></div></div>
   <div class="card" style="margin-top:10px"><div class="hd">素材・入手先</div><div class="bd">${mat}</div></div>
  </div></div>`;
  $("modal").classList.add("open");
@@ -521,7 +558,7 @@ function renderCompare(){
 
 function renderMysets(){
  $("mysetsGrid").innerHTML=mysets.length?mysets.map((s,i)=>`<div class="card set"><h3>${esc(s.name)}</h3><div class="meta">${esc(s.weapon.name)}${s.weapon.referenceStatus?"（旧マスター参照）":""} / 保存時指数 ${Number(s.score).toFixed(1)} (${esc(s.modelVersion||"旧モデル")}) / ${new Date(s.created).toLocaleDateString("ja-JP")}</div>
- <div>${s.parts.map(p=>`<span class="pill">${SLOT_JA[p.slot]} ${esc(p.name)}${p.referenceStatus?"（旧マスター参照）":""}</span>`).join("")}</div><div class="chips">${chipHtml(s.skills,s.drift)}</div>
+ <div class="note">${DB.weapons.find(w=>w.id===s.weapon.id)?.conditionalSkills?.length&&typeof s.searchConditions?.styleSkillStates?.[s.weapon.id]!=="boolean"?"スタイル技能の解放状態は未記録。保存時指数は旧記録で、再検索時は未解放から開始します。":""}</div><div>${s.parts.map(p=>`<span class="pill">${SLOT_JA[p.slot]} ${esc(p.name)}${p.referenceStatus?"（旧マスター参照）":""}</span>`).join("")}</div><div class="chips">${chipHtml(s.skills,s.drift)}</div>
  <div class="row" style="margin-top:9px"><button class="btn small loadSet" data-i="${i}">武器条件を読込</button><button class="btn small matSet" data-id="${esc(s.id)}">素材</button><button class="btn small danger delSet" data-i="${i}">削除</button></div></div>`).join(""):`<div class="empty">まだマイセットはありません。</div>`;
  document.querySelectorAll(".delSet").forEach(b=>b.onclick=()=>{mysets.splice(+b.dataset.i,1);persist();renderMysets();renderMaterialSetOptions();updateStats()});
  document.querySelectorAll(".loadSet").forEach(b=>b.onclick=()=>loadSetWeapon(mysets[+b.dataset.i]));
@@ -675,7 +712,7 @@ function validateBackup(input){
  const ids=(v,label)=>{if(!Array.isArray(v)||v.length>10000)fail(label+" は配列が必要です");v.forEach(x=>str(x,label));if(new Set(v).size!==v.length)fail(label+" が重複しています")};
  const armorConfig=v=>{if(!plain(v))fail("armorSettings");for(const x of Object.values(v)){if(!plain(x)||!Number.isInteger(x.grade)||x.grade<1||x.grade>10||!Array.isArray(x.unlocks)||x.unlocks.length>3||x.unlocks.some(g=>!Number.isInteger(g)||g<1||g>10))fail("解放Grade")}};
  const records=(v,limit)=>{if(!plain(v))fail("漂移対応表");for(const [id,rows]of Object.entries(v)){str(id,"防具ID");if(!Array.isArray(rows)||rows.length>limit)fail("漂移件数");const seen=new Set();for(const r of rows){if(!plain(r))fail("漂移結果");str(r.id,"錬成ID");str(r.skill,"スキル");if(seen.has(r.id))fail("錬成結果ID重複");seen.add(r.id);r.level??=1;if(r.level!==1)fail("錬成Lv");for(const k of ["attack","defense","affinity"]){r[k]??=0;num(r[k],0,k==="affinity"?100:1000,k)}if([r.attack,r.defense,r.affinity].filter(n=>n>0).length>1)fail("追加パラメータは1種類");for(const k of ["stone","driftstoneCategory"])if(r[k]!==undefined&&typeof r[k]!=="string")fail(k)}}};
- const prefs=v=>{if(!plain(v))fail("preferences");if(v.weaponId!==undefined)str(v.weaponId,"weaponId");if(v.skillCategory!==undefined&&!Object.hasOwn(SKILL_CATEGORY_LABELS,v.skillCategory))fail("skillCategory");if(v.driftPool!==undefined)ids(v.driftPool,"driftPool");if(v.values!==undefined){if(!plain(v.values))fail("preferences.values");for(const [id,x]of Object.entries(v.values)){if(!/^(driftMode|rawInput|affInput|elementSelect|elemInput|weakElement|groupHunt|up_\w+)$/.test(id)||!plain(x)||typeof x.value!=="string"||(id.startsWith("up_")&&!UPTIMES.some(u=>id==="up_"+u.id)))fail("preference value");if(x.checked!==undefined&&typeof x.checked!=="boolean")fail("checked");if(id==="driftMode"&&!["none","theory","owned","manual"].includes(x.value))fail("driftMode");if(id==="elementSelect"&&!BUILTIN.elements.includes(x.value))fail("element");if(/^(rawInput|affInput|elemInput|up_)/.test(id)){if(!x.value.trim())fail(id);num(Number(x.value),id==="affInput"?-100:0,id.startsWith("up_")||id==="affInput"?100:100000,id)}}}};
+ const prefs=v=>{if(!plain(v))fail("preferences");if(v.styleSkillStates!==undefined){if(!plain(v.styleSkillStates))fail("styleSkillStates");for(const [id,state]of Object.entries(v.styleSkillStates)){str(id,"style weapon ID");if(typeof state!=="boolean")fail("style unlock state")}}if(v.weaponId!==undefined)str(v.weaponId,"weaponId");if(v.skillCategory!==undefined&&!Object.hasOwn(SKILL_CATEGORY_LABELS,v.skillCategory))fail("skillCategory");if(v.driftPool!==undefined)ids(v.driftPool,"driftPool");if(v.values!==undefined){if(!plain(v.values))fail("preferences.values");for(const [id,x]of Object.entries(v.values)){if(!/^(driftMode|rawInput|affInput|elementSelect|elemInput|elementMultiplier|weakElement|groupHunt|up_\w+)$/.test(id)||!plain(x)||typeof x.value!=="string"||(id.startsWith("up_")&&!UPTIMES.some(u=>id==="up_"+u.id)))fail("preference value");if(x.checked!==undefined&&typeof x.checked!=="boolean")fail("checked");if(id==="driftMode"&&!["none","theory","owned","manual"].includes(x.value))fail("driftMode");if(id==="elementSelect"&&!BUILTIN.elements.includes(x.value))fail("element");if(/^(rawInput|affInput|elemInput|elementMultiplier|up_)/.test(id)){if(!x.value.trim())fail(id);num(Number(x.value),id==="affInput"?-100:0,id==="elementMultiplier"?10:id.startsWith("up_")||id==="affInput"?100:100000,id)}}}};
  const weapon=w=>{if(!plain(w))fail("weapon");str(w.id,"weapon.id");str(w.name,"weapon.name");for(const k of ["attack","affinity","elementValue"])num(w[k],k==="affinity"?-100:0,k==="affinity"?100:100000,k);map(w.skills??={},"weapon.skills");if(!DB.weapons.some(x=>x.id===w.id))w.referenceStatus="unknown-reference"};
  const conditions=v=>{prefs(v);if(v.requirements!==undefined)map(v.requirements,"requirements");if(v.skillLimits!==undefined)limitMap(v.skillLimits,"skillLimits");if(v.requirements&&v.skillLimits)for(const k of Object.keys(v.requirements))if(Object.prototype.hasOwnProperty.call(v.skillLimits,k))fail("同一スキルに必須と上限/除外を同時指定できません");if(v.manualDrift!==undefined)map(v.manualDrift,"manualDrift");if(v.armorSettings!==undefined)armorConfig(v.armorSettings);if(v.ownedDrift!==undefined)records(v.ownedDrift,20);if(v.excluded!==undefined)ids(v.excluded,"excluded");if(v.weapon!==undefined)weapon(v.weapon);if(v.masterVersion!==undefined)str(v.masterVersion,"masterVersion");if(v.masterSchemaVersion!==undefined&&v.masterSchemaVersion!==6)fail("master schema")};
  ids(o.excluded,"excluded");if(!Array.isArray(o.mysets)||o.mysets.length>10000)fail("mysets");const setids=new Set();
@@ -686,7 +723,7 @@ function validateMaster(o){
  if(!o||(o.schemaVersion!==undefined&&o.schemaVersion!==6)||!Array.isArray(o.weapons)||!Array.isArray(o.armors)||!o.skills)throw new Error("weapons / armors / skills が必要です");
  if(!o.weapons.some(w=>w.id!=="custom")||!o.armors.length||!Object.keys(o.skills).length)throw new Error("空のマスターは使用できません");
  const ids=new Set();for(const a of o.armors){if(!a.id||!SLOT_ORDER.includes(a.slot)||!a.name||ids.has(a.id))throw new Error("armor の id / slot / name を確認してください");ids.add(a.id)}
- const wids=new Set();for(const w of o.weapons){if(!w.id||wids.has(w.id)||!Number.isFinite(w.attack)||!Number.isFinite(w.affinity)||!Number.isFinite(w.elementValue))throw new Error("武器データが不正です");wids.add(w.id)}
+ const wids=new Set();for(const w of o.weapons){if(!w.id||wids.has(w.id)||!Number.isFinite(w.attack)||!Number.isFinite(w.affinity)||!Number.isFinite(w.elementValue))throw new Error("武器データが不正です");resolveStyleSkills(w);for(const r of w.conditionalSkills||[])if(!o.skills[r.skill]||r.level>o.skills[r.skill].max)throw new Error("不正な条件付き技能です");wids.add(w.id)}
  for(const r of [...o.weapons,...o.armors])if(r.source&&!/^https:\/\//.test(r.source))throw new Error("出典URLはHTTPSが必要です");
  return true;
 }
@@ -752,14 +789,16 @@ async function init(){
  applyPreferences(saved.preferences);$("driftMode").onchange();renderReq();renderManualDrift();renderMysets();renderMaterialSetOptions();renderDriftArmorList();updateStats();
  $("powerResults").innerHTML=`<div class="empty"><b>準備完了</b><br>武器と条件を選び「最大威力構成を検索」を押してください。<br><span class="note">全装備マスター読込後の自動全探索はiOS負荷を避けるため停止しました。</span></div>`;
  $("stEvaluated").textContent="-";$("stBest").textContent="-";$("stDrift").textContent="-";
- document.addEventListener("change",e=>{if(/^(driftMode|rawInput|affInput|elementSelect|elemInput|weakElement|groupHunt|up_\w+)$/.test(e.target.id)||e.target.closest?.("#driftPool"))persist()});await nextPaint();registerPwa();
+ $("styleSkillInput").onchange=e=>{const value=e.target.value;if(!["locked","unlocked"].includes(value))throw new Error("不正な解放状態です");styleSkillStates[$("weaponSelect").value]=value==="unlocked";updateStyleInput(currentWeapon());updateWeaponSummary(currentWeapon());persist()};
+ document.addEventListener("input",e=>{if(/^(rawInput|affInput|elementSelect|elemInput)$/.test(e.target.id))updateWeaponSummary(currentWeapon())});
+ document.addEventListener("change",e=>{if(/^(rawInput|affInput|elementSelect|elemInput)$/.test(e.target.id))updateWeaponSummary(currentWeapon());if(/^(driftMode|rawInput|affInput|elementSelect|elemInput|elementMultiplier|weakElement|groupHunt|up_\w+)$/.test(e.target.id)||e.target.closest?.("#driftPool"))persist()});await nextPaint();registerPwa();
  if(!Object.keys(DB.skills).some(driftableSkill))$("rcNotice").textContent="v0.6.1 / 漂移候補0件・解放Grade未確認。理論探索はデータ再取得まで停止。所持漂移はゲーム内確認情報を登録して利用可能。指数は暫定GenericモデルでDPSではありません。";
  if(loaded&&Object.keys(DB.skills).some(driftableSkill))$("rcNotice").textContent="v0.6.1 / Generic Power Index（DPSではありません）。候補制限付き近似探索。理論漂移はスキルのみ最適化・追加パラメータ0。旧防具11件は未確認扱い。";
  if(!loaded && $("dataSourceNote"))$("dataSourceNote").textContent="内蔵フォールバック。自動マスター未生成です。GitHub Actionsを実行してください。";
 }
 
 let theoryCandidateCache=null;
-const MODEL_VERSION="generic-0.6-rc2-r1";
+const MODEL_VERSION="generic-0.6-style-r4";
 function isModeled(k){return MODELED_POWER_SKILLS.includes(k)||["火","水","雷","氷","龍"].some(e=>k===elementSkill(e)||k===elementAdvanced(e))}
 function availableDriftSlots(a){
  const setting=armorSettings[a.id],gs=setting?.unlocks||a.driftUnlockGrades||[],grade=setting?.grade||parseInt(String(a.grade||"").replace("G",""),10)||10;
@@ -771,8 +810,8 @@ function saveArmorSettings(a){
  armorSettings[a.id]={grade,unlocks,confidence:"user-confirmed",retrievedAt:new Date().toISOString()};persist();renderDriftEditor();
 }
 function bindDriftEdits(arr){document.querySelectorAll(".editOwnedDrift").forEach(b=>b.onclick=()=>{const r=arr[+b.dataset.i];editingDriftId=r.id;$("ownedDriftSkillSearch").value=r.skill;renderDriftSkillChoices();$("ownedDriftSkillSelect").value=r.skill;updateOwnedStoneChoices();const opt=document.createElement("option");opt.textContent=r.stone||"未指定";$("ownedDriftStone").append(opt);$("ownedDriftStone").value=opt.value;const type=["attack","defense","affinity"].find(k=>r[k]>0)||"none";$("ownedDriftBonusType").value=type;$("ownedDriftBonusValue").value=r[type]||0;$("addOwnedDrift").textContent="編集を保存"})}
-function capturePreferences(){const ids=["driftMode","rawInput","affInput","elementSelect","elemInput","weakElement","groupHunt",...UPTIMES.map(u=>"up_"+u.id)];const values={};for(const id of ids){const e=$(id);if(e)values[id]={value:e.value,checked:e.checked}}return {weaponId:$("weaponSelect")?.value,values,skillCategory,driftPool:[...document.querySelectorAll("#driftPool input:checked")].map(e=>e.value)}}
-function applyPreferences(p){if(!p)return;const w=DB.weapons.find(w=>w.id===p.weaponId);if(w){$("weaponSelect").innerHTML=`<option value="${esc(w.id)}">${esc(w.name)}</option>`;setWeapon(w)}for(const [id,v]of Object.entries(p.values||{})){const e=$(id);if(e&&/^(driftMode|rawInput|affInput|elementSelect|elemInput|weakElement|groupHunt|up_\w+)$/.test(id)){e.value=v.value;if(typeof v.checked==="boolean")e.checked=v.checked}}if(Array.isArray(p.driftPool))document.querySelectorAll("#driftPool input").forEach(e=>e.checked=p.driftPool.includes(e.value));if(SKILL_CATEGORY_LABELS[p.skillCategory])skillCategory=p.skillCategory;$("driftMode").onchange?.();for(const u of UPTIMES)$("lbl_"+u.id).textContent=$("up_"+u.id).value+"%";renderSkillCategories()}
+function capturePreferences(){const ids=["driftMode","rawInput","affInput","elementSelect","elemInput","elementMultiplier","weakElement","groupHunt",...UPTIMES.map(u=>"up_"+u.id)];const values={};for(const id of ids){const e=$(id);if(e)values[id]={value:e.value,checked:e.checked}}return {styleSkillStates:{...styleSkillStates},weaponId:$("weaponSelect")?.value,values,skillCategory,driftPool:[...document.querySelectorAll("#driftPool input:checked")].map(e=>e.value)}}
+function applyPreferences(p){if(!p){styleSkillStates={};updateStyleInput(currentWeapon());updateWeaponSummary(currentWeapon());return}styleSkillStates={...(p.styleSkillStates||{})};if($("elementMultiplier"))$("elementMultiplier").value="1";const w=DB.weapons.find(w=>w.id===p.weaponId);if(w){$("weaponSelect").innerHTML=`<option value="${esc(w.id)}">${esc(w.name)}</option>`;setWeapon(w)}for(const [id,v]of Object.entries(p.values||{})){const e=$(id);if(e&&/^(driftMode|rawInput|affInput|elementSelect|elemInput|elementMultiplier|weakElement|groupHunt|up_\w+)$/.test(id)){e.value=v.value;if(typeof v.checked==="boolean")e.checked=v.checked}}if(Array.isArray(p.driftPool))document.querySelectorAll("#driftPool input").forEach(e=>e.checked=p.driftPool.includes(e.value));if(SKILL_CATEGORY_LABELS[p.skillCategory])skillCategory=p.skillCategory;$("driftMode").onchange?.();for(const u of UPTIMES)$("lbl_"+u.id).textContent=$("up_"+u.id).value+"%";renderSkillCategories();updateStyleInput(currentWeapon());updateWeaponSummary(currentWeapon())}
 
 function showDiagnostics(){
  const counts=CANON_WEAPON_TYPES.map(t=>[t,DB.weapons.filter(w=>w.type===t).length]);const unknown=DB.armors.filter(a=>a.driftStatus==="unknown");

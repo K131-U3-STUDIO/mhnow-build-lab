@@ -236,7 +236,9 @@ button,.tab,.bottom-tab{-webkit-user-select:none;user-select:none}
     <div class="field"><label>属性</label><select id="elementSelect"></select></div>
     <div class="field"><label>属性値</label><input id="elemInput" type="number" min="0"></div>
    </div>
+   <div class="field"><label for="styleSkillInput">スタイルLv10の追加技能（武器ごと）</label><select id="styleSkillInput"><option value="locked">未解放</option><option value="unlocked">解放済み</option></select><div class="note" id="styleSkillNote"></div></div></div>
    <div class="toggle"><div><b style="font-size:12px">弱点属性として計算</b><div class="note">OFF時は属性値を火力指数から除外</div></div><input id="weakElement" type="checkbox" checked></div>
+   <div class="field"><label for="elementMultiplier">属性倍率（属性側のみ）</label><input id="elementMultiplier" type="number" min="0" max="10" step="any" value="1"><div class="note">通常1 / 属性無効0 / 例: 1.5。OFF時は倍率にかかわらず属性0。</div></div>
    <div class="toggle"><div><b style="font-size:12px">グループ狩猟</b><div class="note">グループハント強化【攻撃】等の条件計算用</div></div><input id="groupHunt" type="checkbox"></div>
 
    <details class="adv" open><summary>発動率・立ち回り</summary><div class="inside" id="uptimeSliders"></div></details>
@@ -261,7 +263,7 @@ button,.tab,.bottom-tab{-webkit-user-select:none;user-select:none}
     </div>
    </div></details>
    <button id="powerSearch" class="btn primary" style="width:100%;margin-top:10px">最大威力構成を検索</button>
-   <div class="warn" style="margin-top:10px">「火力指数」は防具構成比較用。モーション値・肉質・弾種/砲撃・武器スタイル・状態異常の総DPSはまだ別モデルです。</div>
+   <div class="warn" style="margin-top:10px">「条件付き火力指数」は装備構成の比較用で、実ダメージ・DPSではありません。属性倍率は属性側のみへ適用。未対応効果は加点せず、物理倍率順の未確定箇所は従来モデルを維持しています。</div>
   </div></aside>
   <main>
    <div class="stats">
@@ -406,5 +408,5 @@ button,.tab,.bottom-tab{-webkit-user-select:none;user-select:none}
 
 <div id="modal" class="modal"><div class="dialog"><div class="dialog-top"><b id="modalTitle">構成詳細</b><button id="modalClose" class="btn small">閉じる</button></div><div id="modalBody" class="dialog-body"></div></div></div>
 
-<script src="./assets/app.65972b91044fada1.js" defer></script>
+<script src="./assets/app.ff17c595aa666af8.js" defer></script>
 </body></html>
