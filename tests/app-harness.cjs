@@ -18,7 +18,7 @@ function makeApp(initial={}) {
  vm.createContext(sandbox);vm.runInContext(source,sandbox,{filename:'js/app.js'});sandbox.master=structuredClone(master);vm.runInContext('DB=normalizeMaster(master);rebuildFastIndexes();',sandbox);
  for(const id of ['wex','burst','guard','spirit','dodger','sneak','latent','heroics'])element('up_'+id).value='0';
  element('weaponSelect').value='custom';element('rawInput').value='1000';element('affInput').value='0';element('elementSelect').value='無属性';element('elemInput').value='0';element('driftMode').value='none';
- element('elementMultiplier').value='1'; // Match the new HTML default; legacy snapshots still omit it.
+ element('attackMode').value='normal';element('elementMultiplier').value='1'; // Match the new HTML default; legacy snapshots still omit it.
  return {sandbox,stored,alerts,element,run:code=>vm.runInContext(code,sandbox),worker:()=>worker,deny:()=>denyWrites=true,allow:()=>denyWrites=false,denyKeys:r=>denyPattern=r};
 }
 

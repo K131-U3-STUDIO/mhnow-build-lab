@@ -212,7 +212,7 @@ button,.tab,.bottom-tab{-webkit-user-select:none;user-select:none}
  </div>
 </header>
 
-<div class="diag" id="rcNotice">v0.6.1 / Generic Power Index（DPSではありません）。探索は候補制限付きで最適性を保証しません。漂移データの未確認項目は使用しません。</div><div class="row"><button class="btn danger" id="cancelSearch" disabled>検索を中止</button><span id="searchProgress" role="status" aria-live="polite"></span></div><nav class="tabs">
+<div class="diag" id="rcNotice">v0.6.1 / 額面火力指数（DPSではありません）。スタイル能力値・未対応スキルは未加算。複数古龍属性スキルの候補は重複規則未確定のため評価対象外。探索は候補制限付きで最適性を保証しません。漂移データの未確認項目は使用しません。</div><div class="row"><button class="btn danger" id="cancelSearch" disabled>検索を中止</button><span id="searchProgress" role="status" aria-live="polite"></span></div><nav class="tabs">
  <button class="tab active" data-tab="power">最大威力</button>
  <button class="tab" data-tab="skill">スキル指定</button>
  <button class="tab" data-tab="drift">漂移管理</button>
@@ -236,9 +236,10 @@ button,.tab,.bottom-tab{-webkit-user-select:none;user-select:none}
     <div class="field"><label>属性</label><select id="elementSelect"></select></div>
     <div class="field"><label>属性値</label><input id="elemInput" type="number" min="0"></div>
    </div>
-   <div class="field"><label for="styleSkillInput">スタイルLv10の追加技能（武器ごと）</label><select id="styleSkillInput"><option value="locked">未解放</option><option value="unlocked">解放済み</option></select><div class="note" id="styleSkillNote"></div></div></div>
-   <div class="toggle"><div><b style="font-size:12px">弱点属性として計算</b><div class="note">OFF時は属性値を火力指数から除外</div></div><input id="weakElement" type="checkbox" checked></div>
-   <div class="field"><label for="elementMultiplier">属性倍率（属性側のみ）</label><input id="elementMultiplier" type="number" min="0" max="10" step="any" value="1"><div class="note">通常1 / 属性無効0 / 例: 1.5。OFF時は倍率にかかわらず属性0。</div></div>
+   <div class="field"><label for="styleSkillInput">スタイルLv10の追加技能（武器ごと）</label><select id="styleSkillInput"><option value="locked">未解放</option><option value="unlocked">解放済み</option></select><div class="note" id="styleSkillNote"></div></div>
+   <div class="note">額面比較では通常属性を常に加算。弱点・武器固有補正・独立会心倍率・状態異常補正・肉質・モーション値は対象外。会心設定は会心撃【属性】の発動確率にのみ使用し、超会心は加点しません。</div><input id="weakElement" type="checkbox" hidden disabled>
+   <input id="elementMultiplier" type="number" value="1" hidden disabled>
+   <div class="field"><label for="attackMode">攻撃区分・SPレベル（手動指定）</label><select id="attackMode"><option value="normal">通常攻撃 ×1</option><option value="sp1">SP Lv1 / G6未満 ×1</option><option value="sp2">SP Lv2 / G6～7 ×1.05</option><option value="sp3">SP Lv3 / G8以上 ×1.10</option></select><div class="note">SP使用時のみ適用。武器グレードに合う区分を選択してください。</div></div>
    <div class="toggle"><div><b style="font-size:12px">グループ狩猟</b><div class="note">グループハント強化【攻撃】等の条件計算用</div></div><input id="groupHunt" type="checkbox"></div>
 
    <details class="adv" open><summary>発動率・立ち回り</summary><div class="inside" id="uptimeSliders"></div></details>
@@ -263,7 +264,7 @@ button,.tab,.bottom-tab{-webkit-user-select:none;user-select:none}
     </div>
    </div></details>
    <button id="powerSearch" class="btn primary" style="width:100%;margin-top:10px">最大威力構成を検索</button>
-   <div class="warn" style="margin-top:10px">「条件付き火力指数」は装備構成の比較用で、実ダメージ・DPSではありません。属性倍率は属性側のみへ適用。未対応効果は加点せず、物理倍率順の未確定箇所は従来モデルを維持しています。</div>
+   <div class="warn" style="margin-top:10px">額面火力指数＝（物理＋通常属性）×SP倍率×ダメージ倍率。実ダメージ・DPSではありません。未対応効果・スタイル能力値は未加算。ダメージスキル間の重複規則は未確定で、従来の乗算を暫定維持しています。</div>
   </div></aside>
   <main>
    <div class="stats">
@@ -370,7 +371,7 @@ button,.tab,.bottom-tab{-webkit-user-select:none;user-select:none}
   <h2>7. バックアップ</h2>
   <ul><li>「バックアップ」は対応端末ではiOSの共有シートを開き、JSONを「ファイルに保存」等へ渡せます。</li><li>共有シート非対応環境では通常のJSONダウンロードに自動で切り替わります。</li><li>「読込」で復元できます。外部装備マスターは「除外・データ」から読み込みます。</li></ul>
   <h2>計算上の注意</h2>
-  <p class="note">火力指数は「攻撃力＋弱点時属性値」を軸に、会心・属性会心・攻撃系スキル・指定発動率を期待値化した比較指標です。武器固有のモーション値、弾/矢、砲撃、スタイル、部位肉質、状態異常蓄積などはまだ完全な実DPS計算ではありません。</p>
+  <p class="note">額面火力指数は「物理攻撃力＋通常属性値」×武器SP倍率×ダメージ倍率です。モンスター弱点によらず通常属性を加算します。会心設定は会心撃【属性】の発動確率にのみ使用。最終会心倍率・武器固有補正・肉質・モーション値・状態異常補正は除外し、状態異常蓄積値は加算しません。未対応スキル・スタイル能力値は加算しない参考順位です。</p>
  </div></div>
 </section>
 
@@ -408,5 +409,5 @@ button,.tab,.bottom-tab{-webkit-user-select:none;user-select:none}
 
 <div id="modal" class="modal"><div class="dialog"><div class="dialog-top"><b id="modalTitle">構成詳細</b><button id="modalClose" class="btn small">閉じる</button></div><div id="modalBody" class="dialog-body"></div></div></div>
 
-<script src="./assets/app.ff17c595aa666af8.js" defer></script>
+<script src="./assets/app.d6411f1ea432b409.js" defer></script>
 </body></html>

@@ -8,21 +8,21 @@ try{
  await page.locator('#weaponPickerBtn').click();await page.locator('#weaponCustomBtn').click();
  await page.locator('#rawInput').fill('1000');await page.locator('#affInput').fill('0');await page.locator('#elementSelect').selectOption('火');await page.locator('#elemInput').fill('200');
  assert.match(await page.locator('#weaponSummary').textContent(),/火 200 \/ 攻撃 1000 \/ 会心 0%/);console.log('PASS manual edits update weapon summary immediately');
- await page.locator('#elementMultiplier').fill('1.5');await page.locator('#rawInput').focus();await page.reload();await page.waitForFunction(n=>document.querySelector('#covWeapons').textContent===String(n),expectedWeapons);
- assert.equal(await page.locator('#elementMultiplier').inputValue(),'1.5');assert.match(await page.locator('#weaponSummary').textContent(),/火 200 \/ 攻撃 1000/);console.log('PASS reload restores multiplier and edited summary');
+ await page.locator('#attackMode').selectOption('sp3');await page.locator('#rawInput').focus();await page.reload();await page.waitForFunction(n=>document.querySelector('#covWeapons').textContent===String(n),expectedWeapons);
+ assert.equal(await page.locator('#attackMode').inputValue(),'sp3');assert.match(await page.locator('#weaponSummary').textContent(),/火 200 \/ 攻撃 1000/);console.log('PASS reload restores multiplier and edited summary');
  // Controlled five-slot equipment makes browser/Worker expected values independent of optimizer choices.
  await page.evaluate(()=>{DB.armors=['head','chest','arms','waist','legs'].map((slot,i)=>({id:'fixture'+i,name:'fixture '+slot,slot,skills:{},grade:'G10',drift:0,driftUnlockGrades:[]}));rebuildFastIndexes()});
  await page.locator('#driftMode').selectOption('none');
- for(const [factor,total,element]of [['0','1000.0','0.0'],['1','1200.0','200.0'],['1.5','1300.0','300.0']]){
-  await page.locator('#elementMultiplier').fill(factor);await page.locator('#powerSearch').click();await page.waitForFunction(()=>!document.querySelector('#powerSearch').disabled);assert.equal(await page.locator('#powerResults .result').count(),1);
-  const score=await page.locator('#powerResults .score').textContent();assert(score.startsWith(total));assert(score.includes(`物理 1000.0 / 属性 ${element}`));
+ for(const [factor,total,element]of [['normal','1200.0','200.0'],['sp2','1260.0','210.0'],['sp3','1320.0','220.0']]){
+  await page.locator('#attackMode').selectOption(factor);await page.locator('#powerSearch').click();await page.waitForFunction(()=>!document.querySelector('#powerSearch').disabled);assert.equal(await page.locator('#powerResults .result').count(),1);
+  const score=await page.locator('#powerResults .score').textContent();assert(score.startsWith(total));assert(score.includes(`物理 ${({normal:"1000.0",sp2:"1050.0",sp3:"1100.0"})[factor]} / 属性 ${element}`));
  }
- console.log('PASS real Worker ranking factors 0 / 1 / 1.5 retain physical contribution');
- await page.locator('#powerResults .result').click();assert.match(await page.locator('#modalBody').textContent(),/属性倍率1.5倍/);assert.match(await page.locator('#modalBody').textContent(),/実ダメージ・DPSではありません/);await page.locator('#saveDetail').click();await page.locator('#modalClose').click();
- const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('mhnbl_v06_snapshot')));assert.equal(saved.mysets[0].score,1300);assert.equal(saved.mysets[0].searchConditions.values.elementMultiplier.value,'1.5');assert.equal(saved.mysets[0].modelVersion,'generic-0.6-style-r4');console.log('PASS detail and saved snapshot identify factor and model');
- await page.locator('#elementMultiplier').fill('0');await page.locator('#rawInput').focus();
- await page.locator('#importFile').setInputFiles({name:'fixture.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(saved))});await page.waitForFunction(()=>document.querySelector('#importFile').value==='');assert.equal(await page.locator('#elementMultiplier').inputValue(),'1.5');console.log('PASS backup import restores factor');
- const legacy=structuredClone(saved);delete legacy.preferences.values.elementMultiplier;delete legacy.mysets[0].searchConditions.values.elementMultiplier;
- await page.locator('#importFile').setInputFiles({name:'legacy.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(legacy))});await page.waitForFunction(()=>document.querySelector('#importFile').value==='');assert.equal(await page.locator('#elementMultiplier').inputValue(),'1');console.log('PASS old backup without factor defaults to 1');
+ console.log('PASS real Worker ranking normal / SP2 / SP3 contributions');
+ await page.locator('#powerResults .result').click();assert.match(await page.locator('#modalBody').textContent(),/武器SP倍率sp3 \/ ×1.1/);assert.match(await page.locator('#modalBody').textContent(),/実ダメージ・DPSではありません/);await page.locator('#saveDetail').click();await page.locator('#modalClose').click();
+ const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('mhnbl_v06_snapshot')));assert.equal(saved.mysets[0].score,1320);assert.equal(saved.mysets[0].searchConditions.values.attackMode.value,'sp3');assert.equal(saved.mysets[0].modelVersion,'face-value-0.6-local-r2');console.log('PASS detail and saved snapshot identify factor and model');
+ await page.locator('#attackMode').selectOption('normal');await page.locator('#rawInput').focus();
+ await page.locator('#importFile').setInputFiles({name:'fixture.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(saved))});await page.waitForFunction(()=>document.querySelector('#importFile').value==='');assert.equal(await page.locator('#attackMode').inputValue(),'sp3');console.log('PASS backup import restores factor');
+ const legacy=structuredClone(saved);delete legacy.preferences.values.attackMode;delete legacy.mysets[0].searchConditions.values.attackMode;
+ await page.locator('#importFile').setInputFiles({name:'legacy.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(legacy))});await page.waitForFunction(()=>document.querySelector('#importFile').value==='');assert.equal(await page.locator('#attackMode').inputValue(),'normal');console.log('PASS old backup without attack mode defaults to normal');
  assert.deepEqual(errors,[]);console.log(JSON.stringify({passed:6,browser:process.env.CHROMIUM_PATH?'configured Chromium executable':'Playwright Chromium'}));
 }finally{await browser.close();server.close()}})().catch(e=>{console.error(e);server.close();process.exitCode=1});

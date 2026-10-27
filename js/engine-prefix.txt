@@ -5,3 +5,5 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const $=id=>config.values[id]||{value:"",checked:false};
 const document={querySelectorAll:()=>config.driftPool.map(value=>({value}))};
 function nextPaint(){return new Promise(resolve=>setTimeout(resolve,0))}
+
+let modelWarnings=new Set();

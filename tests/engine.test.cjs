@@ -10,8 +10,8 @@ const rec=(id,skill='攻撃',attack=0)=>({id,skill,level:1,attack,defense:0,affi
 E.configure(input());
 test('weapon skill exactly once',()=>{const r=E.evaluate(parts,w);assert.equal(r.skills['攻撃'],1);assert.equal(r.score,1250)});
 test('no drift ignores owned',()=>{E.configure(input('none',{a0:[rec('x')]}));assert.equal(E.evaluate(parts,w).usedDrift,0)});
-test('negative affinity has 0.75 penalty',()=>assert.equal(E.calcFromSkills({}, {...w,affinity:-100}).rawExpected,750));
-test('positive affinity clamp',()=>assert.equal(E.calcFromSkills({}, {...w,affinity:200}).rawExpected,1250));
+test('negative affinity has no final penalty in face value',()=>assert.equal(E.calcFromSkills({}, {...w,affinity:-100}).rawExpected,1000));
+test('positive affinity clamp',()=>assert.equal(E.calcFromSkills({}, {...w,affinity:200}).rawExpected,1000));
 test('status element not added as raw damage',()=>assert.equal(E.calcFromSkills({}, {...w,element:'毒'}).score,1000));
 test('skill caps across all sources',()=>assert.equal(E.sumSkills([{skills:{'攻撃':4}}],{'攻撃':3},{'攻撃':2})['攻撃'],5));
 test('unimplemented skill does not invent score',()=>assert.equal(E.calcFromSkills({'集中':5},w).score,E.calcFromSkills({},w).score));
@@ -25,7 +25,7 @@ test('requested owned skill missing from eligible master allowed',()=>{const i=i
 test('theoretical drift includes weapon skills',()=>{E.configure(input('theory'));const r=E.evaluate(parts,w,{'攻撃':3});assert(r);assert(r.skills['攻撃']>=3);assert.equal(r.usedDrift,2)});
 test('manual assigned to actual armor slots',()=>{const i=input('manual');i.manualDrift={'攻撃':2};E.configure(i);const r=E.evaluate(parts,w);assert.equal(r.driftByArmor.a0.length,2)});
 test('force Lv5 verified penalty 30%',()=>{E.configure(input());assert.equal(E.calcFromSkills({'力任せ':5},w).affinity,-30)});
-test('elemental critical applies to elemental contribution',()=>{E.configure(input());assert.equal(E.calcFromSkills({}, {...w,affinity:100}).elemExpected,250)});
-test('critical element scales base weapon element only',()=>{E.configure(input());assert.equal(E.calcFromSkills({'会心撃【属性】':5,'火属性攻撃強化':5}, {...w,affinity:100}).elemExpected,1075)});
+test('elemental critical applies to elemental contribution',()=>{E.configure(input());assert.equal(E.calcFromSkills({}, {...w,affinity:100}).elemExpected,200)});
+test('critical element scales base weapon element only',()=>{E.configure(input());assert.equal(E.calcFromSkills({'会心撃【属性】':5,'火属性攻撃強化':5}, {...w,affinity:100}).elemExpected,860)});
 test('conditional affinity clamp before averaging',()=>{const i=input();i.config.values.up_wex={value:50};E.configure(i);assert.equal(E.calcFromSkills({'弱点特効':5},{...w,affinity:90}).affinity,95)});
 (async()=>{E.configure(input());const results=await E.enumerate({'攻撃':1});assert.equal(results.length,1);assert.equal(results[0].weapon.id,'w');console.log('PASS requested skill search + weapon snapshot');passed++;const i=input();i.excluded=['a0'];E.configure(i);assert.equal((await E.enumerate()).length,0);console.log('PASS exclusion');passed++;console.log(JSON.stringify({passed}));})().catch(e=>{console.error(e);process.exitCode=1});

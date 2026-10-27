@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "build": "python tools/build_engine.py && python tools/build_model_coverage.py && python tools/build_release.py",
-    "test": "node tests/engine.test.cjs && node tests/skill-constraints.test.cjs && node tests/skill-constraints-app.test.cjs && node tests/rc2.test.cjs && node tests/sw-release.test.cjs && node tests/index-model.test.cjs && node tests/style-model.test.cjs",
-    "test:ui": "node tests/ui.test.cjs && node tests/rc2-ui.test.cjs && node tests/index-ui.test.cjs && node tests/style-ui.test.cjs"
+    "test": "node tests/engine.test.cjs && node tests/skill-constraints.test.cjs && node tests/skill-constraints-app.test.cjs && node tests/rc2.test.cjs && node tests/sw-release.test.cjs && node tests/index-model.test.cjs && node tests/style-model.test.cjs && node tests/face-value.test.cjs && node tests/face-value-review.test.cjs",
+    "test:ui": "node tests/ui.test.cjs && node tests/rc2-ui.test.cjs && node tests/index-ui.test.cjs && node tests/style-ui.test.cjs && node tests/layout-face-value-ui.test.cjs"
   },
   "devDependencies": {
     "playwright": "1.62.1"

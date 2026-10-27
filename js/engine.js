@@ -6,14 +6,17 @@ const $=id=>config.values[id]||{value:"",checked:false};
 const document={querySelectorAll:()=>config.driftPool.map(value=>({value}))};
 function nextPaint(){return new Promise(resolve=>setTimeout(resolve,0))}
 
+let modelWarnings=new Set();
+
 const SLOT_ORDER=["head","chest","arms","waist","legs"];
 const SLOT_JA={head:"頭",chest:"胴",arms:"腕",waist:"腰",legs:"脚"};
 const SEARCH_BEAM_LIMIT=2600;
 const SEARCH_FINAL_LIMIT=120;
 const SEARCH_POWER_SLOT_LIMIT=22;
 const SEARCH_SKILL_SLOT_LIMIT=34;
-const MODELED_POWER_SKILLS=["攻撃活性","果敢","力任せ","攻撃","攻撃・境地","見切り","弱点特効","力の解放","グループハント強化【攻撃】","連撃","攻めの守勢","火事場力","超会心","会心撃【属性】","滅尽龍の渇望","闘気活性","ジャスト巧撃【持続】","闇討ち"];
-const MODEL_VERSION="generic-0.6-style-r4";
+const MODELED_POWER_SKILLS=["SPスキル威力アップ","鋼龍の凍風","幻獣の疾雷","溟龍の波雷","爵銀龍の紅血","冰龍の冰纏","攻撃活性","果敢","力任せ","攻撃","攻撃・境地","見切り","弱点特効","力の解放","グループハント強化【攻撃】","連撃","攻めの守勢","火事場力","超会心","会心撃【属性】","滅尽龍の渇望","闘気活性","ジャスト巧撃【持続】","闇討ち"];
+const MODEL_VERSION="face-value-0.6-local-r2";
+function floorModel(value){return Math.floor(value+Number.EPSILON*Math.max(1,Math.abs(value))*4)}
 function styleNote(w){return (w.styleState?.hasConditional?`スタイルLv10技能: ${w.styleState.unlocked?"解放済み":w.styleState.explicit?"未解放":"未解放（未指定の初期値）"} / `:"")+"スタイル強化の能力値加算は未反映"}
 function resolveStyleSkills(w,settings={}){
  const rows=w.conditionalSkills||[];
@@ -39,6 +42,7 @@ function sumSkills(parts,weaponSkills={},drift={}){
  return s;
 }
 function calcFromSkills(skills,weapon,statBonus={}){
+
  let raw=(+weapon.attack||0)+(+statBonus.attack||0), aff=(+weapon.affinity||0)+(+statBonus.affinity||0), elem=+weapon.elementValue||0;
  const baseRaw=+weapon.attack||0,baseElement=elem,b=[];
  if(weapon.styleState){b.push(["スタイル強化",styleNote(weapon)]);for(const r of weapon.conditionalSkillStatus||[])b.push([r.skill,`スタイルLv${r.requiredCustomEnhancementLevel}技能: ${r.applied?"採用":"不採用"}`])}
@@ -60,12 +64,21 @@ function calcFromSkills(skills,weapon,statBonus={}){
 
 
  const rawBeforeMultipliers=raw,elementAdded=elem-baseElement;
- const powerhouse=lv([.10,.15,.25],skills["攻撃活性"]||0);if(powerhouse){raw*=1+powerhouse;b.push(["攻撃活性",`物理 ×${1+powerhouse}`])}
- const burst=lv([.05,.10,.15,.20,.30],skills["連撃"]||0)*getUptime("burst");if(burst){raw*=1+burst;b.push(["連撃",`平均物理 ×${(1+burst).toFixed(3)}`])}
- const guard=lv([.10,.15,.20,.30,.40],skills["攻めの守勢"]||0)*getUptime("guard");if(guard){raw*=1+guard;b.push(["攻めの守勢",`平均物理 ×${(1+guard).toFixed(3)}`])}
- const hero=lv([.10,.20,.30,.40,.50],skills["火事場力"]||0)*getUptime("heroics");if(hero){raw*=1+hero;b.push(["火事場力",`平均物理 ×${(1+hero).toFixed(3)}`])}
+ const attackAdded=raw-baseRaw;let attackRate=0;
+ const powerhouse=lv([.10,.15,.25],skills["攻撃活性"]||0);if(powerhouse){/* Applied after attack additions below. */b.push(["攻撃活性",`物理 ×${1+powerhouse}`])}
+ const burst=lv([.05,.10,.15,.20,.30],skills["連撃"]||0)*getUptime("burst");if(burst){attackRate+=burst;b.push(["連撃",`平均物理 ×${(1+burst).toFixed(3)}`])}
+ const guard=lv([.10,.15,.20,.30,.40],skills["攻めの守勢"]||0)*getUptime("guard");if(guard){attackRate+=guard;b.push(["攻めの守勢",`平均物理 ×${(1+guard).toFixed(3)}`])}
+ const hero=lv([.10,.20,.30,.40,.50],skills["火事場力"]||0)*getUptime("heroics");if(hero){attackRate+=hero;b.push(["火事場力",`平均物理 ×${(1+hero).toFixed(3)}`])}
 
- const critBoost=skills["超会心"]?lv([1.30,1.35,1.40,1.45,1.50],skills["超会心"]):1.25;
+ raw=floorModel((baseRaw*(1+attackRate)+attackAdded)*(1+powerhouse));
+ const critBoost=1; // Final critical multiplier intentionally excluded from face-value index.
+ let elderRate=0;
+ for(const [name,element,table] of [["鋼龍の凍風","氷",[.10,.15,.25]],["幻獣の疾雷","雷",[.10,.15,.25]],["溟龍の波雷","水",[.10,.15,.25]],["爵銀龍の紅血","龍",[.10,.15,.25]],["冰龍の冰纏","氷",[.10,.15,.20]]]){
+  if(weapon.element===element&&skills[name]){if(elderRate){const reason="複数の古龍属性倍率を持つ候補は重複規則未確定のため評価対象外です（0点ではありません）";modelWarnings.add(reason);return {score:-1e100,unsupported:true,unsupportedReasons:[reason]}};elderRate=lv(table,skills[name]);}
+ }
+ const attackMode=$("attackMode")?.value||"normal";
+ if(!["normal","sp1","sp2","sp3"].includes(attackMode))throw new Error("攻撃区分が不正です");
+ const spMultiplier={normal:1,sp1:1,sp2:1.05,sp3:1.10}[attackMode];
  // Integrate conditional affinity before clamping: average-then-clamp biases caps/negative affinity.
  const wexFull=lv([20,25,30,40,50],skills["弱点特効"]||0),latentFull=lv([20,30,40,50,60],skills["力の解放"]||0);
  const wp=getUptime("wex"),lp=getUptime("latent"),fixed=aff-wexFull*wp-latentFull*lp;
@@ -75,37 +88,39 @@ function calcFromSkills(skills,weapon,statBonus={}){
  const branches=[];
  for(const [onW,pw] of [[0,1-wp],[1,wp]])for(const [onL,pl] of [[0,1-lp],[1,lp]]){
   const stateProbability=pw*pl,a=clamp(fixed+onW*wexFull+onL*latentFull,-100,100);effAff+=stateProbability*a;
-  for(const [kind,p,multiplier] of [["normal",1-Math.abs(a)/100,1],[a>=0?"critical":"negative",Math.abs(a)/100,a>=0?critBoost:.75]]){
+  for(const [kind,p,multiplier] of [["normal",1-Math.abs(a)/100,1],[a>=0?"critical":"negative",Math.abs(a)/100,1]]){
    const probability=stateProbability*p;if(!probability)continue;
    const elementalBase=baseElement*(1+(kind==="critical"?inc:0));
-   const physical=raw*multiplier,elemental=(elementalBase+elementAdded)*multiplier;
+   const physical=raw*multiplier,elemental=floorModel((elementalBase+elementAdded)*(1+elderRate));
    rawExp+=probability*physical;elemExpBeforeFactor+=probability*elemental;critMul+=probability*multiplier;
    branches.push({kind,probability,physical,elemental});
   }
  }
- b.push(["会心期待値",`${effAff.toFixed(1)}% / 倍率 ${critBoost.toFixed(2)} → ×${critMul.toFixed(4)}`]);
+ b.push(["会心撃の発動確率用会心",`${effAff.toFixed(1)}% / 倍率 ${critBoost.toFixed(2)} → ×${critMul.toFixed(4)}`]);
  elem=elemExpBeforeFactor;
+ const physicalBase=rawExp,elementBase=elem;let damageMultiplier=1;
  if(inc)b.push(["会心撃【属性】",`武器属性値のみ +${(inc*100).toFixed(0)}%（会心時）`]);
 
- const nerg=lv([.10,.15,.20],skills["滅尽龍の渇望"]||0);if(nerg){rawExp*=1+nerg;elem*=1+nerg;b.push(["滅尽龍の渇望",`ダメージ ×${(1+nerg).toFixed(2)}`])}
- const fs=lv([.10,.15,.20,.25,.35],skills["闘気活性"]||0)*getUptime("spirit");if(fs){rawExp*=1+fs;elem*=1+fs;b.push(["闘気活性",`平均ダメージ ×${(1+fs).toFixed(3)}`])}
- const daring=lv([.05,.10,.20],skills["果敢"]||0);if(daring){rawExp*=1+daring;elem*=1+daring;b.push(["果敢",`ダメージ ×${1+daring} / ジャスト回避不可`])}
+ const nerg=lv([.10,.15,.20],skills["滅尽龍の渇望"]||0);if(nerg){damageMultiplier*=1+nerg;b.push(["滅尽龍の渇望",`ダメージ ×${(1+nerg).toFixed(2)}`])}
+ const fs=lv([.10,.15,.20,.25,.35],skills["闘気活性"]||0)*getUptime("spirit");if(fs){damageMultiplier*=1+fs;b.push(["闘気活性",`平均ダメージ ×${(1+fs).toFixed(3)}`])}
+ const daring=lv([.05,.10,.20],skills["果敢"]||0);if(daring){damageMultiplier*=1+daring;b.push(["果敢",`ダメージ ×${1+daring} / ジャスト回避不可`])}
  if(daring&&skills["ジャスト巧撃【持続】"])b.push(["発動制約","果敢によりジャスト巧撃【持続】は発動不可（加点0）"]);
- const od=(daring?0:1)*lv([.10,.15,.20,.25,.35],skills["ジャスト巧撃【持続】"]||0)*getUptime("dodger");if(od){rawExp*=1+od;elem*=1+od;b.push(["ジャスト巧撃【持続】",`平均ダメージ ×${(1+od).toFixed(3)}`])}
- const sn=lv([.10,.15,.20,.25,.30],skills["闇討ち"]||0)*getUptime("sneak");if(sn){rawExp*=1+sn;elem*=1+sn;b.push(["闇討ち",`平均ダメージ ×${(1+sn).toFixed(3)}`])}
+ const od=(daring?0:1)*lv([.10,.15,.20,.25,.35],skills["ジャスト巧撃【持続】"]||0)*getUptime("dodger");if(od){damageMultiplier*=1+od;b.push(["ジャスト巧撃【持続】",`平均ダメージ ×${(1+od).toFixed(3)}`])}
+ const sn=lv([.10,.15,.20,.25,.30],skills["闇討ち"]||0)*getUptime("sneak");if(sn){damageMultiplier*=1+sn;b.push(["闇討ち",`平均ダメージ ×${(1+sn).toFixed(3)}`])}
 
- const useElem=$("weakElement").checked && !["無属性","毒","麻痺","睡眠","爆破"].includes(weapon.element);
- const factorInput=$("elementMultiplier")?.value;
- // Absent in old snapshots: retain the former ON=1 / OFF=0 behavior.
- const elementMultiplier=factorInput===undefined||factorInput===""?1:Number(factorInput);
- if(!Number.isFinite(elementMultiplier)||elementMultiplier<0||elementMultiplier>10)throw new Error("属性倍率は0〜10の数値で入力してください");
- const elemExp=useElem?elem*elementMultiplier:0;
- b.unshift(["基礎値",`物理 ${baseRaw} / 属性 ${baseElement}`],["スキル・漂移加算",`物理 +${rawBeforeMultipliers-baseRaw} / 属性 +${elementAdded}`]);
- b.push(["属性倍率",`${useElem?elementMultiplier:0}倍${useElem?"（属性側のみ）":"（属性OFFまたは状態異常・無属性）"}`]);
+ const useElem=["火","水","雷","氷","龍"].includes(weapon.element);
+ const elementMultiplier=1; // Monster weakness and legacy multiplier do not apply to face value.
+ if(attackMode!=="normal"){const spSkill=lv([.10,.20,.30,.45,.60],skills["SPスキル威力アップ"]||0);const spAdvanced=0; // Advanced stacking remains unmodeled until verified.
+ damageMultiplier*=(1+spSkill)*(1+spAdvanced);if(spSkill||spAdvanced)b.push(["SPダメージスキル",`SP時のみ ×${(1+spSkill)*(1+spAdvanced)}`])}
+ const finalMultiplier=spMultiplier*damageMultiplier;
+ rawExp=physicalBase*finalMultiplier;
+ const elemExp=useElem?elementBase*finalMultiplier:0;
+ b.unshift(["基礎値",`物理 ${baseRaw} / 属性 ${baseElement}`],["物理計算",`floor((${baseRaw} × ${1+attackRate} + ${attackAdded}) × ${1+powerhouse}) = ${physicalBase}`]);
+ b.push(["属性計算",`基礎 ${baseElement} + 加算 ${elementAdded} / 古龍 ×${1+elderRate} / 会心撃分岐ごと切捨て → ${useElem?elementBase:0}`],["武器SP倍率",`${attackMode} / ×${spMultiplier}`],["ダメージ倍率",`×${damageMultiplier}（対応スキル間は従来の乗算を暫定維持・重複規則未確定）`],["額面指数",`(${physicalBase} + ${useElem?elementBase:0}) × ${spMultiplier} × ${damageMultiplier}`],["除外する補正","弱点・武器固有補正・独立した会心倍率・状態異常補正・肉質・モーション値。状態異常蓄積値は属性に加算しません"],["会心設定","会心撃【属性】の発動確率のみ。超会心は額面指数に加点なし"]);
  for(const [skill,id] of [["弱点特効","wex"],["力の解放","latent"],["連撃","burst"],["攻めの守勢","guard"],["火事場力","heroics"],["闘気活性","spirit"],["ジャスト巧撃【持続】","dodger"],["闇討ち","sneak"]])if(skills[skill])b.push([skill+" 条件",`${(getUptime(id)*100).toFixed(0)}%${skill==="ジャスト巧撃【持続】"&&daring?" / 果敢により適用0":""}`]);
  if(skills["グループハント強化【攻撃】"])b.push(["グループ条件",$("groupHunt").checked?"ON":"OFF / 適用0"]);
  for(const [skill,level] of Object.entries(skills))if(level>0&&!isModeled(skill))b.push([skill,"指数未対応・加点なし"]);
- const calculation={baseRaw,baseElement,rawAdded:rawBeforeMultipliers-baseRaw,elementAdded,physicalBeforeCritical:raw,elementMultiplier:useElem?elementMultiplier:0,branches};
+ const calculation={baseRaw,baseElement,rawAdded:rawBeforeMultipliers-baseRaw,elementAdded,physicalBeforeCritical:raw,physicalBase,elementBase:useElem?elementBase:0,spMultiplier,damageMultiplier,attackMode,elementMultiplier:useElem?elementMultiplier:0,branches};
  return {score:rawExp+elemExp,rawExpected:rawExp,elemExpected:elemExp,affinity:effAff,breakdown:b,calculation};
 }
 function relevantSkills(req,weapon,limits=skillLimits){
@@ -144,10 +159,10 @@ function optimizeDrift(parts,base,weapon,req,mode,limits=skillLimits){
   if(mode==="theory")items=theory.flatMap(k=>Array.from({length:slots},(_,i)=>({id:`theory:${part.id}:${k}:${i}`,skill:k,level:1,attack:0,affinity:0,defense:0,stone:(DB.skills[k]?.driftStones||[]).join(" / ")})));
   else items=candidateOwnedRecords(part,weapon,req,base);
   const options=comboOptions(items,Math.min(slots,3)),map=new Map();
-  for(const st of states){for(const opt of options){let add={};for(const r of opt)add[r.skill]=(add[r.skill]||0)+(r.level||1);const skills=combine(st.skills,add);if(!limitsMet(skills,limits))continue;const bonus={attack:st.bonus.attack,affinity:st.bonus.affinity,defense:st.bonus.defense};for(const r of opt){bonus.attack+=+r.attack||0;bonus.affinity+=+r.affinity||0;bonus.defense+=+r.defense||0}const byArmor={...st.byArmor};if(opt.length)byArmor[part.id]=opt.map(x=>({...x}));const score=calcFromSkills(skills,weapon,bonus).score,def=reqDeficit(skills,req),q=score-def*1e7;const key=rel.map(k=>skills[k]||0).join(",")+`#${bonus.attack}#${bonus.affinity.toFixed(2)}`;const old=map.get(key);if(!old||q>old.q)map.set(key,{skills,byArmor,bonus,q})}}
+  for(const st of states){for(const opt of options){let add={};for(const r of opt)add[r.skill]=(add[r.skill]||0)+(r.level||1);const skills=combine(st.skills,add);if(!limitsMet(skills,limits))continue;const bonus={attack:st.bonus.attack,affinity:st.bonus.affinity,defense:st.bonus.defense};for(const r of opt){bonus.attack+=+r.attack||0;bonus.affinity+=+r.affinity||0;bonus.defense+=+r.defense||0}const byArmor={...st.byArmor};if(opt.length)byArmor[part.id]=opt.map(x=>({...x}));const calculation=calcFromSkills(skills,weapon,bonus);if(calculation.unsupported)continue;const score=calculation.score,def=reqDeficit(skills,req),q=score-def*1e7;const key=rel.map(k=>skills[k]||0).join(",")+`#${bonus.attack}#${bonus.affinity.toFixed(2)}`;const old=map.get(key);if(!old||q>old.q)map.set(key,{skills,byArmor,bonus,q})}}
   states=[...map.values()].sort((a,b)=>b.q-a.q).slice(0,64);
  }
- const valid=states.filter(x=>reqMet(x.skills,req)).sort((a,b)=>calcFromSkills(b.skills,weapon,b.bonus).score-calcFromSkills(a.skills,weapon,a.bonus).score);return valid[0]||null;
+ const valid=states.filter(x=>reqMet(x.skills,req)&&!calcFromSkills(x.skills,weapon,x.bonus).unsupported).sort((a,b)=>calcFromSkills(b.skills,weapon,b.bonus).score-calcFromSkills(a.skills,weapon,a.bonus).score);return valid[0]||null;
 }
 function assignManualToArmors(parts){
  const byArmor={},capacity=new Map(parts.map(p=>[p.id,availableDriftSlots(p)]));
@@ -200,11 +215,12 @@ function combine(base,add){const s={...base};for(const [k,v]of Object.entries(ad
 function reqMet(skills,req){for(const [k,v]of Object.entries(req||{}))if((skills[k]||0)<v)return false;return true}
 function evaluate(parts,weapon,req={},limits=skillLimits){
  const base=sumSkills(parts,weapon.skills,{}),slots=driftSlots(parts),mode=$("driftMode").value;if(!limitsMet(base,limits))return null;
- if(mode==="none"){if(!reqMet(base,req)||!limitsMet(base,limits))return null;return {...calcFromSkills(base,weapon),skills:base,drift:{},driftByArmor:{},driftStats:{attack:0,affinity:0,defense:0},slots,usedDrift:0}}
- if(mode==="manual"){const byArmor=assignManualToArmors(parts);if(!byArmor)return null;const drift=aggregateDrift(byArmor),skills=combine(base,drift);if(!reqMet(skills,req)||!limitsMet(skills,limits))return null;const c=calcFromSkills(skills,weapon);return {...c,skills,drift,driftByArmor:byArmor,driftStats:{attack:0,affinity:0,defense:0},slots,usedDrift:Object.values(drift).reduce((a,b)=>a+b,0)}}
- const best=optimizeDrift(parts,base,weapon,req,mode,limits);if(!best)return null;const drift=aggregateDrift(best.byArmor),stats=best.bonus;if(!limitsMet(best.skills,limits))return null;const c=calcFromSkills(best.skills,weapon,stats);return {...c,skills:best.skills,drift,driftByArmor:best.byArmor,driftStats:stats,slots,usedDrift:Object.values(drift).reduce((a,b)=>a+b,0)}
+ if(mode==="none"){if(!reqMet(base,req)||!limitsMet(base,limits))return null;const c=calcFromSkills(base,weapon);if(c.unsupported)return null;return {...c,skills:base,drift:{},driftByArmor:{},driftStats:{attack:0,affinity:0,defense:0},slots,usedDrift:0}}
+ if(mode==="manual"){const byArmor=assignManualToArmors(parts);if(!byArmor)return null;const drift=aggregateDrift(byArmor),skills=combine(base,drift);if(!reqMet(skills,req)||!limitsMet(skills,limits))return null;const c=calcFromSkills(skills,weapon);if(c.unsupported)return null;return {...c,skills,drift,driftByArmor:byArmor,driftStats:{attack:0,affinity:0,defense:0},slots,usedDrift:Object.values(drift).reduce((a,b)=>a+b,0)}}
+ const best=optimizeDrift(parts,base,weapon,req,mode,limits);if(!best)return null;const drift=aggregateDrift(best.byArmor),stats=best.bonus;if(!limitsMet(best.skills,limits))return null;const c=calcFromSkills(best.skills,weapon,stats);if(c.unsupported)return null;return {...c,skills:best.skills,drift,driftByArmor:best.byArmor,driftStats:stats,slots,usedDrift:Object.values(drift).reduce((a,b)=>a+b,0)}
 }
 async function enumerateLocal(req={},progressCb=null){
+ modelWarnings.clear();
  theoryCandidateCache=null;const weapon=currentWeapon(),base=sumSkills([],weapon.skills,{});if(!limitsMet(base,skillLimits))return [];const rel=relevantSkills(req,weapon,skillLimits);
  const lists=SLOT_ORDER.map(slot=>candidateArmors(slot,weapon,req,base,skillLimits));if(lists.some(x=>x.length===0))return [];
  let states=[{parts:[],skills:base,slots:0}];
@@ -236,7 +252,7 @@ function availableDriftSlots(a){
 function isModeled(k){return MODELED_POWER_SKILLS.includes(k)||["火","水","雷","氷","龍"].some(e=>k===elementSkill(e)||k===elementAdvanced(e))}
 
 function configure(input){
- styleSkillStates=input.config.styleSkillStates||{};DB=input.db;ownedDrift=input.ownedDrift||{};manualDrift=input.manualDrift||{};armorSettings=input.armorSettings||{};skillLimits=input.skillLimits||{};excluded=new Set(input.excluded||[]);config=input.config;theoryCandidateCache=null;
+ modelWarnings.clear();styleSkillStates=input.config.styleSkillStates||{};DB=input.db;ownedDrift=input.ownedDrift||{};manualDrift=input.manualDrift||{};armorSettings=input.armorSettings||{};skillLimits=input.skillLimits||{};excluded=new Set(input.excluded||[]);config=input.config;theoryCandidateCache=null;
  armorSlotCache=Object.fromEntries(SLOT_ORDER.map(slot=>[slot,DB.armors.filter(a=>a.slot===slot)]));
 }
-globalThis.MHNEngine={configure,resolveStyleSkills,enumerate:enumerateLocal,evaluate,sumSkills,calcFromSkills,optimizeDrift,aggregateDrift,availableDriftSlots,comboOptions,limitsMet};
+globalThis.MHNEngine={getWarnings:()=>[...modelWarnings],configure,resolveStyleSkills,enumerate:enumerateLocal,evaluate,sumSkills,calcFromSkills,optimizeDrift,aggregateDrift,availableDriftSlots,comboOptions,limitsMet};
