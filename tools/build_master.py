@@ -7,7 +7,7 @@ from __future__ import annotations
 import argparse, concurrent.futures, datetime as dt, json, re, sys, time, unicodedata
 from pathlib import Path
 from urllib.parse import urljoin, urlparse, unquote
-from data_validation import atomic_publish
+from data_validation import atomic_publish, UnsupportedSkillCondition
 import requests
 from bs4 import BeautifulSoup
 
@@ -380,6 +380,8 @@ def main():
   import official_sources
   if previous is None:previous={"weapons":[{"id":"custom","name":"カスタム武器","type":"任意","attack":1000,"affinity":0,"element":"無属性","elementValue":0,"skills":{}}]}
   data=official_sources.fetch(get,previous);atomic_publish(data,args.output,previous);print("Published official structured master",len(data["weapons"]),len(data["armors"]),len(data["skills"]));return
+ except UnsupportedSkillCondition as e:
+  raise SystemExit("Official source condition is not supported; master unchanged, fallback disabled: "+str(e)) from e
  except Exception as e:print("Official structured route failed; trying existing fallback parsers:",str(e),file=sys.stderr)
  print("Fetching skill index...")
  skills=fetch_skills();print("skills",len(skills));drift_skill_count=sum(1 for v in skills.values() if v.get("drift"));print("driftable skills",drift_skill_count);print("Fetching armors...");armors=fetch_armors(skills,previous);print("armors",len(armors));drift_armors=sum(1 for a in armors if int(a.get("drift",0) or 0)>0);max_drift=max([int(a.get("drift",0) or 0) for a in armors] or [0]);print("armors with drift slots",drift_armors,"max slots",max_drift);print("Fetching weapons...");weapons=fetch_weapons(skills,args.output);print("weapons",len(weapons))
