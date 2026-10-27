@@ -1,0 +1,21 @@
+{
+  "sourceCommit": "2936de46ef7d1110261139a5d61a6087f2567f3b",
+  "runId": "40492474269",
+  "runAttempt": "1",
+  "release": "v061-1b53f75bf0e366dd",
+  "files": {
+    "DAMAGE_MODEL.md": "31e1f61c468c9d33b60d16c9d4743ad3f76ff33af79f1640169e42124e2b53bb",
+    "assets/app.ff17c595aa666af8.js": "ff17c595aa666af801994c35e55fa8a02396eeda9b4f9287b30fceace2929521",
+    "assets/engine.f9d8e4f292b77a6f.js": "f9d8e4f292b77a6f371223471cc8395eb4e4502dde15a68a0df256c85ca35107",
+    "assets/search-worker.f79066ea6618fba7.js": "f79066ea6618fba72f79893b91e1a0379d8ce89e725a193135d92cfe1524fac5",
+    "data/mhn_master.json": "bb7183a98dda6def82b14272c9016b07b1941363e0d2371755d9093263d70978",
+    "icons/apple-touch-icon.png": "0d0789e624cdcc036f59d58b6b0aa9176e9fbec23ce00d7f99a62497726b5ac2",
+    "icons/icon-192.png": "b60767894e83bb97b88138fda8f84b857d99ade7fc32f78a4346fb93dcc19145",
+    "icons/icon-512.png": "42c85a596a5ff574b906d1668e787467d7dcea00998e69373ac0d9a20abbbd6e",
+    "index.html": "25649c028c5eebf7e121d8ac9911cc9a6e4f78cde46be5ef7f7eb49e77b019f1",
+    "js/engine.js": "f9d8e4f292b77a6f371223471cc8395eb4e4502dde15a68a0df256c85ca35107",
+    "manifest.webmanifest": "3bed13344198b08500241e9acf6277b569613dfeae5436693ee1512fe4642ffe",
+    "release-manifest.json": "bb9443c596eec8f013d9bb992dffef9d73c7f00fb8579be2b6c0ed70a4659fa0",
+    "service-worker.js": "0267ecfac174d1ecb9e36764f9bd00bcd508c1d9cf3ec711eb4c3c5b4f9f9682"
+  }
+}

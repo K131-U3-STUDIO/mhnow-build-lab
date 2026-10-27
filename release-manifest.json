@@ -1,15 +1,15 @@
 {
-  "release": "v061-11b02c2d094eb7c6",
+  "release": "v061-1b53f75bf0e366dd",
   "schemaVersion": 6,
   "assets": {
-    "index.html": "ca6ca3213ec2e7ef9ce13cf9685d6b8a7f4f2dfed32b905ed3a8c253b05f07f9",
+    "index.html": "25649c028c5eebf7e121d8ac9911cc9a6e4f78cde46be5ef7f7eb49e77b019f1",
     "manifest.webmanifest": "3bed13344198b08500241e9acf6277b569613dfeae5436693ee1512fe4642ffe",
-    "data/mhn_master.json": "3bcc2b4572d22fea89efcb8725519c28a2c3031b1111776d3a7224ca84558674",
+    "data/mhn_master.json": "bb7183a98dda6def82b14272c9016b07b1941363e0d2371755d9093263d70978",
     "icons/icon-192.png": "b60767894e83bb97b88138fda8f84b857d99ade7fc32f78a4346fb93dcc19145",
     "icons/icon-512.png": "42c85a596a5ff574b906d1668e787467d7dcea00998e69373ac0d9a20abbbd6e",
     "icons/apple-touch-icon.png": "0d0789e624cdcc036f59d58b6b0aa9176e9fbec23ce00d7f99a62497726b5ac2",
-    "assets/engine.f9d8e4f292b77a6f.js": "3778d0a0afb20341996d359e5c2499c3a2905e1d2d6cb8de7ffc6fae7a5ccc5f",
-    "assets/search-worker.f79066ea6618fba7.js": "14153a80de0479dba6fa66a37f6f9612cf275bf7184a31d64a4c0eebf9929663",
-    "assets/app.ff17c595aa666af8.js": "e098a1a2c39180f1b2b373d6ea4e731fda4aedb3c4429ea7d31d3a0f921881fc"
+    "assets/engine.f9d8e4f292b77a6f.js": "f9d8e4f292b77a6f371223471cc8395eb4e4502dde15a68a0df256c85ca35107",
+    "assets/search-worker.f79066ea6618fba7.js": "f79066ea6618fba72f79893b91e1a0379d8ce89e725a193135d92cfe1524fac5",
+    "assets/app.ff17c595aa666af8.js": "ff17c595aa666af801994c35e55fa8a02396eeda9b4f9287b30fceace2929521"
   }
 }
